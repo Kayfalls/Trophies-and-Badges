@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .admin-login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #e9e9f8, #f4f4f6);
+      padding: 20px;
+    }
+    .admin-login-card {
+      background: #fff;
+      border-radius: 24px;
+      padding: 50px 44px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(47,48,141,0.15);
+    }
+    .admin-login-card .logo-wrap {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .admin-login-card .logo-wrap img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 50%;
+      box-shadow: 0 8px 20px rgba(47,48,141,0.2);
+      margin-bottom: 16px;
+    }
+    .admin-login-card h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .admin-login-card p.subtitle {
+      font-size: 14px;
+      color: #888;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    .form-group .input-wrap {
+      position: relative;
+    }
+    .form-group .input-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #aaa;
+      font-size: 14px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 13px 14px 13px 40px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+    }
+    .form-group input:focus {
+      border-color: #2f308d;
+      background: #fff;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      background: #2f308d;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 0 #1c1d66, 0 16px 30px rgba(47,48,141,0.25);
+      transition: 0.2s;
+      margin-top: 8px;
+    }
+    .btn-login:hover { background: #f4070d; }
+    .btn-login:active { transform: translateY(4px); box-shadow: 0 4px 0 #1c1d66; }
+    .error-msg {
+      background: #fff0f0;
+      color: #d00;
+      border: 1px solid #fcc;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-top: 16px;
+      display: none;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 14px;
+      color: #888;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #2f308d; }
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 10px;
+      color: #2f308d;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-login-wrapper">
+    <div class="admin-login-card">
+      <div class="logo-wrap">
+        <img src="images/TandB.png" alt="Logo">
+        <h1>Admin Portal</h1>
+        <p class="subtitle">Trophies & Badges Management</p>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" id="admin-email" placeholder="admin@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="admin-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+      </div>
+
+      <button class="btn-login" id="login-btn">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+      </button>
+
+      <div class="loading-spinner" id="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
+      </div>
+
+      <div class="error-msg" id="error-msg"></div>
+
+      <a href="index.html" class="back-link">
+        <i class="fa-solid fa-arrow-left"></i> Back to site
+      </a>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    const loginBtn   = document.getElementById('login-btn');
+    const emailInput = document.getElementById('admin-email');
+    const passInput  = document.getElementById('admin-password');
+    const errorMsg   = document.getElementById('error-msg');
+    const loading    = document.getElementById('loading');
+
+    // If already logged in as admin, go straight to dashboard
+    auth.onAuthStateChanged(user => {
+      if (user && user.email === ADMIN_EMAIL) {
+        window.location.href = 'dashboard.html';
+      }
+    });
+
+    loginBtn.addEventListener('click', async () => {
+      const email    = emailInput.value.trim();
+      const password = passInput.value;
+
+      errorMsg.style.display = 'none';
+
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return;
+      }
+
+      if (email !== ADMIN_EMAIL) {
+        showError('Access denied. This portal is for admins only.');
+        return;
+      }
+
+      loginBtn.style.display = 'none';
+      loading.style.display  = 'block';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          // First-time setup: create the admin account
+          try {
+            await auth.createUserWithEmailAndPassword(email, password);
+            window.location.href = 'dashboard.html';
+          } catch (createErr) {
+            showError('Setup failed: ' + createErr.message);
+          }
+        } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-login-credentials') {
+          showError('Incorrect password. Please try again.');
+        } else {
+          showError(err.message);
+        }
+        loginBtn.style.display = 'block';
+        loading.style.display  = 'none';
+      }
+    });
+
+    passInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') loginBtn.click();
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+  // Apply saved theme immediately to prevent flash
+  (function(){
+    var t = localStorage.getItem('theme') || 'system';
+    if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else if(t==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.setAttribute('data-theme','dark');
+  })();
+</script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <a href="index.html" class="logo">Trophies & Badges</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="about.html" class="active">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="nav-cart">
+      <i class="fa-solid fa-bag-shopping"></i> Cart
+      <span class="nav-cart-count" id="cart-count">0</span>
+    </a>
+    <a href="account.html" style="margin-left:10px;"><i class="fa-solid fa-user"></i></a>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="index.html">Home</a>
+  <a href="products.html">Products</a>
+  <a href="about.html" class="active">About</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart <span class="mobile-cart-count" id="mobile-cart-count"></span></a>
+  <a href="account.html">My Account</a>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <h1>About Us</h1>
+  <p>Trophies & Badges provides premium awards, trophies and medals for schools, sports teams and businesses across South Africa.</p>
+</section>
+
+<!-- ABOUT -->
+<section class="about">
+  <div class="about-container">
+    <h2>Our Mission</h2>
+    <p>Our goal is to celebrate achievement by providing high quality trophies, medals and custom awards for every event.</p>
+
+    <h2>What We Offer</h2>
+    <div class="features">
+      <div class="feature"><i class="fa-solid fa-trophy"></i><span>Custom Trophies</span></div>
+      <div class="feature"><i class="fa-solid fa-medal"></i><span>Sports Medals</span></div>
+      <div class="feature"><i class="fa-regular fa-id-badge"></i><span>School Badges</span></div>
+      <div class="feature"><i class="fa-solid fa-stamp"></i><span>Rubber Stamps</span></div>
+      <div class="feature"><i class="fa-solid fa-shirt"></i><span>Printed T-Shirts</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <h2>Ready to Order?</h2>
+  <p>Browse our full range of products or get in touch with our team for custom orders.</p>
+  <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+    <a href="products.html" class="btn-cta"><i class="fa-solid fa-bag-shopping"></i> Shop Now</a>
+    <a href="contact.html" style="padding:16px 28px;border-radius:14px;border:2px solid rgba(255,255,255,0.6);color:#fff;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+      <i class="fa-solid fa-envelope"></i> Contact Us
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div><h4>Address</h4><p>Trade Route Mall<br>Cnr Nirvana Rd & K43<br>Lenasia Ext. 9</p></div>
+    <div><h4>Phone</h4><p><a href="tel:+27837676746">+27 83 767 6746</a><br><a href="tel:+27817524685">+27 81 752 4685</a></p></div>
+    <div><h4>Email</h4><p><a href="mailto:trophies.badges@gmail.com">trophies.badges@gmail.com</a></p></div>
+    <div><h4>Quick Links</h4><p><a href="products.html">Shop</a><br><a href="contact.html">Contact</a><br><a href="account.html">My Account</a></p></div>
+  </div>
+  <p class="copyright">© 2026 Trophies & Badges</p>
+</footer>
+
+<script>
+  function updateCartBadge() {
+    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
+    const el    = document.getElementById('cart-count');
+    if (el) { el.textContent = count; el.classList.toggle('show', count > 0); }
+  }
+  updateCartBadge();
+  function toggleMenu() { document.getElementById('mobile-menu').classList.toggle('open'); }
+</script>
+<script src="tb-cursor.js" defer></script>
+</body>
+</html>

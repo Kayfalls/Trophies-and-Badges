@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+  // Apply saved theme immediately to prevent flash
+  (function(){
+    var t = localStorage.getItem('theme') || 'system';
+    if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else if(t==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.setAttribute('data-theme','dark');
+  })();
+</script>
+</head>
+<body>
+
+<!-- TOP NAVBAR -->
+<nav class="topnav">
+  <a href="index.html" class="icon-btn"><i class="fa-solid fa-arrow-left"></i></a>
+  <div class="topnav-logo" style="flex:1;text-align:center;">Product Detail</div>
+  <a href="cart.html" class="icon-btn" aria-label="Cart">
+    <i class="fa-solid fa-bag-shopping"></i>
+    <span class="cart-badge" id="cart-badge">0</span>
+  </a>
+</nav>
+
+<!-- DETAIL PAGE -->
+<div class="detail-page" id="detail-page">
+  <!-- Loading -->
+  <div id="loading-state" style="grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:32px;margin-bottom:12px;display:block;"></i>
+    Loading product...
+  </div>
+</div>
+
+<!-- STICKY BUY BAR (injected after load) -->
+<div class="buy-bar" id="buy-bar" style="display:none;">
+  <div class="qty-control">
+    <button id="qty-minus"><i class="fa-solid fa-minus"></i></button>
+    <span id="qty-display">1</span>
+    <button id="qty-plus"><i class="fa-solid fa-plus"></i></button>
+  </div>
+  <button class="btn btn-primary" style="flex:1;" id="add-to-cart-btn">
+    <i class="fa-solid fa-bag-shopping"></i> Add to Cart
+  </button>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="index.html"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
+  <a href="cart.html"><i class="fa-solid fa-bag-shopping"></i><span>Cart</span><span class="cart-dot" id="cart-dot"></span></a>
+  <a href="account.html"><i class="fa-solid fa-user"></i><span>Account</span></a>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+  // Theme
+  const themeVal = localStorage.getItem('theme') || 'system';
+  if (themeVal === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (themeVal === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
+
+  // Cart badge
+  function updateCartBadge() {
+    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
+    const badge = document.getElementById('cart-badge');
+    const dot   = document.getElementById('cart-dot');
+    if (badge) { badge.textContent = count; badge.classList.toggle('show', count > 0); }
+    if (dot)   dot.classList.toggle('show', count > 0);
+  }
+  updateCartBadge();
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.className = `toast show ${type}`;
+    document.getElementById('toast-msg').textContent = msg;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  const productId = new URLSearchParams(location.search).get('id');
+  if (!productId) window.location.href = 'index.html';
+
+  let product = null;
+  let qty     = 1;
+  let currentUser = null;
+
+  auth.onAuthStateChanged(u => { currentUser = u; });
+
+  // ─── LOAD PRODUCT ──────────────────────────────────────────
+  async function loadProduct() {
+    try {
+      const doc = await db.collection('products').doc(productId).get();
+      if (!doc.exists) { window.location.href = 'index.html'; return; }
+      product = { id: doc.id, ...doc.data() };
+      renderProduct();
+      loadReviews();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('loading-state').innerHTML = '<p>Error loading product.</p>';
+    }
+  }
+
+  // ─── RENDER PRODUCT ────────────────────────────────────────
+  function renderProduct() {
+    document.title = `${product.name} | Trophies & Badges`;
+    const page = document.getElementById('detail-page');
+
+    const stockClass = product.stock === 0 ? 'out-stock' : product.stock <= 5 ? 'low-stock' : 'in-stock';
+    const stockText  = product.stock === 0 ? 'Out of Stock' : product.stock <= 5 ? `Only ${product.stock} left` : 'In Stock';
+
+    // Images
+    const images = product.images || [];
+    const hasVideo = !!product.videoUrl;
+
+    const mainImgSrc = images[0] || '';
+    const mainMedia  = mainImgSrc
+      ? `<img class="main-image" id="main-img" src="${mainImgSrc}" alt="${product.name}">`
+      : `<div class="main-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:60px;color:var(--primary);"><i class="fa-solid fa-trophy"></i></div>`;
+
+    const thumbs = images.map((url, i) =>
+      `<img class="thumb ${i===0?'active':''}" src="${url}" data-index="${i}" alt="Image ${i+1}" onclick="switchMedia('img', '${url}', this)">`
+    ).join('') + (hasVideo
+      ? `<div class="thumb" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);cursor:pointer;" onclick="switchMedia('video', '${product.videoUrl}')"><i class="fa-solid fa-play" style="color:var(--primary);font-size:20px;"></i></div>`
+      : '');
+
+    page.innerHTML = `
+      <!-- Gallery -->
+      <div class="image-gallery">
+        <div id="media-wrap">${mainMedia}</div>
+        ${(images.length > 1 || hasVideo) ? `<div class="thumb-scroll">${thumbs}</div>` : ''}
+      </div>
+
+      <!-- Info -->
+      <div class="detail-info">
+        ${product.categoryName ? `<div class="detail-cat">${product.categoryName}</div>` : ''}
+        <h1 class="detail-title">${product.name}</h1>
+        <div class="detail-price">R${Number(product.price).toFixed(2)}</div>
+        <span class="detail-stock ${stockClass}">${stockText}</span>
+        <p class="detail-desc">${product.description || ''}</p>
+
+        <!-- Shipping Info -->
+        <div class="info-section">
+          <div class="info-section-header" onclick="toggleInfo(this)">
+            <span><i class="fa-solid fa-truck" style="margin-right:8px;color:var(--primary);"></i> Shipping & Collection</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="info-section-body">
+            <p><strong>Collection (Free):</strong><br>Trade Route Mall, Cnr Nirvana Rd & K43, Lenasia Ext. 9<br>Collection available during business hours. You'll be notified when your order is ready.</p>
+            <br>
+            <p><strong>Delivery:</strong><br>We offer courier delivery across South Africa. Delivery fees are calculated at checkout based on your location. Estimated 3–7 business days after payment confirmation.</p>
+            <br>
+            <p>For urgent orders please contact us: +27 83 767 6746</p>
+          </div>
+        </div>
+
+        <!-- Return Policy -->
+        <div class="info-section">
+          <div class="info-section-header" onclick="toggleInfo(this)">
+            <span><i class="fa-solid fa-rotate-left" style="margin-right:8px;color:var(--primary);"></i> Return Policy</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="info-section-body">
+            <p><strong>7-Day Return Policy</strong></p>
+            <p>We accept returns within 7 days of collection/delivery under the following conditions:</p>
+            <ul style="margin:8px 0 0 18px;line-height:2;">
+              <li>Item must be in original, unused condition</li>
+              <li>Original packaging must be intact</li>
+              <li>Proof of purchase required</li>
+              <li>Custom-engraved or personalised items cannot be returned unless defective</li>
+            </ul>
+            <br>
+            <p>To initiate a return, go to Account → Returns or contact us at trophies.badges@gmail.com</p>
+          </div>
+        </div>
+
+        <!-- Reviews Summary -->
+        <div id="reviews-summary" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- Reviews Full Section -->
+      <div class="reviews-section" style="grid-column:1/-1;">
+        <div id="reviews-list"></div>
+        <div class="write-review" id="write-review-section"></div>
+      </div>
+    `;
+
+    // Buy bar
+    if (product.stock > 0) {
+      document.getElementById('buy-bar').style.display = 'flex';
+    }
+  }
+
+  function switchMedia(type, src, thumbEl) {
+    const wrap = document.getElementById('media-wrap');
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    if (thumbEl) thumbEl.classList.add('active');
+    if (type === 'img') {
+      wrap.innerHTML = `<img class="main-image" id="main-img" src="${src}" alt="Product">`;
+    } else {
+      wrap.innerHTML = `<video class="main-image" src="${src}" controls autoplay style="background:#000;"></video>`;
+    }
+  }
+
+  function toggleInfo(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('i.fa-chevron-down');
+    body.classList.toggle('open');
+    icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+  }
+
+  // ─── QTY CONTROL ───────────────────────────────────────────
+  document.getElementById('qty-minus').addEventListener('click', () => {
+    if (qty > 1) { qty--; document.getElementById('qty-display').textContent = qty; }
+  });
+  document.getElementById('qty-plus').addEventListener('click', () => {
+    if (qty < (product?.stock || 1)) { qty++; document.getElementById('qty-display').textContent = qty; }
+  });
+
+  // ─── ADD TO CART ───────────────────────────────────────────
+  document.getElementById('add-to-cart-btn').addEventListener('click', () => {
+    if (!product || product.stock === 0) return;
+    const cart = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+    const existing = cart.items.find(i => i.productId === product.id);
+    if (existing) {
+      existing.quantity = Math.min(existing.quantity + qty, product.stock);
+    } else {
+      cart.items.push({
+        productId: product.id,
+        name:      product.name,
+        price:     product.price,
+        image:     product.images?.[0] || '',
+        quantity:  qty,
+        stock:     product.stock
+      });
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBadge();
+    showToast(`${qty} × ${product.name} added to cart`);
+  });
+
+  // ─── REVIEWS ───────────────────────────────────────────────
+  async function loadReviews() {
+    try {
+      const snap = await db.collection('reviews')
+        .where('productId', '==', productId)
+        .orderBy('createdAt', 'desc')
+        .get();
+
+      const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const avg = reviews.length
+        ? (reviews.reduce((s, r) => s + r.stars, 0) / reviews.length).toFixed(1)
+        : null;
+
+      // Summary
+      const summaryEl = document.getElementById('reviews-summary');
+      if (summaryEl && reviews.length > 0) {
+        summaryEl.innerHTML = `
+          <div class="reviews-summary">
+            <div class="avg-score">${avg}</div>
+            <div class="stars-bar">
+              <div class="stars">${renderStars(parseFloat(avg))}</div>
+              <div class="review-count">${reviews.length} review${reviews.length !== 1 ? 's' : ''}</div>
+            </div>
+          </div>`;
+      }
+
+      // List
+      const listEl = document.getElementById('reviews-list');
+      if (listEl) {
+        if (reviews.length === 0) {
+          listEl.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:16px 0;">No reviews yet. Be the first!</p>';
+        } else {
+          listEl.innerHTML = `<h3 style="font-size:16px;font-weight:700;margin-bottom:8px;">Reviews</h3>` +
+            reviews.map(r => {
+              const date = r.createdAt ? new Date(r.createdAt.toMillis()).toLocaleDateString('en-ZA') : '';
+              return `
+                <div class="review-card">
+                  <div class="review-header">
+                    <span class="reviewer-name">${r.userName || 'Anonymous'}</span>
+                    <span class="review-date">${date}</span>
+                  </div>
+                  <div class="stars">${renderStars(r.stars)}</div>
+                  <p class="review-text" style="margin-top:6px;">${r.comment || ''}</p>
+                </div>`;
+            }).join('');
+        }
+      }
+
+      // Write review form
+      renderWriteReview();
+    } catch (err) {
+      console.error('Reviews error:', err);
+    }
+  }
+
+  function renderStars(score) {
+    return [1,2,3,4,5].map(i =>
+      `<i class="${i <= score ? 'fa-solid' : 'fa-regular'} fa-star star ${i > score ? 'empty' : ''}"></i>`
+    ).join('');
+  }
+
+  function renderWriteReview() {
+    const el = document.getElementById('write-review-section');
+    if (!el) return;
+
+    if (!currentUser || !currentUser.emailVerified) {
+      el.innerHTML = `
+        <div style="background:var(--surface-2);border-radius:12px;padding:16px;text-align:center;margin-top:8px;">
+          <p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Sign in to leave a review</p>
+          <a href="login.html?redirect=product-detail.html?id=${productId}" class="btn btn-primary btn-sm">Sign In</a>
+        </div>`;
+      return;
+    }
+
+    let selectedStars = 0;
+    el.innerHTML = `
+      <h3 class="write-review" style="font-size:16px;font-weight:700;margin:16px 0 10px;">Write a Review</h3>
+      <div class="star-picker" id="star-picker">
+        ${[1,2,3,4,5].map(i => `<span class="star-pick" data-star="${i}"><i class="fa-solid fa-star"></i></span>`).join('')}
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <textarea id="review-comment" placeholder="Share your experience..." rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" id="submit-review-btn">
+        <i class="fa-solid fa-paper-plane"></i> Submit Review
+      </button>
+      <div id="review-err" class="auth-error" style="margin-top:8px;"></div>
+    `;
+
+    // Star picker
+    el.querySelectorAll('.star-pick').forEach(star => {
+      star.addEventListener('click', () => {
+        selectedStars = parseInt(star.dataset.star);
+        el.querySelectorAll('.star-pick').forEach((s, i) => {
+          s.classList.toggle('selected', i < selectedStars);
+        });
+      });
+    });
+
+    el.querySelector('#submit-review-btn').addEventListener('click', async () => {
+      const comment = el.querySelector('#review-comment').value.trim();
+      const errEl   = el.querySelector('#review-err');
+      errEl.style.display = 'none';
+      if (!selectedStars)  { errEl.textContent = 'Please select a star rating.'; errEl.style.display='block'; return; }
+      if (!comment)        { errEl.textContent = 'Please write a comment.'; errEl.style.display='block'; return; }
+
+      try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const userName = userDoc.exists ? userDoc.data().name : (currentUser.displayName || 'Customer');
+        await db.collection('reviews').add({
+          productId,
+          userId:    currentUser.uid,
+          userName,
+          stars:     selectedStars,
+          comment,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Review submitted!');
+        el.innerHTML = '<p style="color:#1a7a3a;font-size:14px;margin-top:8px;"><i class="fa-solid fa-circle-check"></i> Review submitted. Thank you!</p>';
+        loadReviews(); // Refresh reviews
+      } catch (err) {
+        errEl.textContent = 'Error submitting review: ' + err.message;
+        errEl.style.display = 'block';
+      }
+    });
+  }
+
+  // ─── INIT ──────────────────────────────────────────────────
+  loadProduct();
+</script>
+<script>function toggleMenu(){document.getElementById("mobile-menu")?.classList.toggle("open");}</script>
+<script src="tb-cursor.js" defer></script>
+</body>
+</html>

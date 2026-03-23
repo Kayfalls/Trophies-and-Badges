@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- MD5 for PayFast signature -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <a href="index.html" class="logo">Trophies &amp; Badges</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="cart.html" class="nav-cart">
+      <i class="fa-solid fa-bag-shopping"></i> Cart
+      <span class="nav-cart-count" id="cart-count">0</span>
+    </a>
+    <a href="account.html" style="margin-left:10px;"><i class="fa-solid fa-user"></i></a>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="index.html">Home</a>
+  <a href="products.html">Products</a>
+  <a href="about.html">About</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html" class="active">Cart <span class="mobile-cart-count" id="mobile-cart-count"></span></a>
+  <a href="account.html">My Account</a>
+</div>
+
+<!-- PAGE -->
+<div id="cart-content" class="cart-page"></div>
+
+
+
+<!-- ADDRESS MODAL -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h2>Delivery Details</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="field">
+        <label>Full Name *</label>
+        <input type="text" id="c-name" placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="c-email" placeholder="email@example.com">
+      </div>
+      <div class="field">
+        <label>Phone *</label>
+        <input type="tel" id="c-phone" placeholder="+27 00 000 0000">
+      </div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:14px;font-size:14px;">
+        <div style="display:flex;gap:10px;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="radio" name="delivery-type" value="collect" checked id="r-collect"> Collection (Free)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="radio" name="delivery-type" value="delivery" id="r-delivery"> Delivery
+          </label>
+        </div>
+        <p id="collect-info" style="font-size:13px;color:var(--muted);">Trade Route Mall, Lenasia Ext. 9</p>
+        <div id="delivery-fields" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:10px;">
+          <div class="field"><label>Street Address</label><input type="text" id="c-street" placeholder="123 Main Rd"></div>
+          <div class="field"><label>City</label><input type="text" id="c-city" placeholder="Johannesburg"></div>
+          <div class="field"><label>Province</label>
+            <select id="c-province">
+              <option value="">Select province</option>
+              <option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Northern Cape</option><option>Free State</option>
+            </select>
+          </div>
+          <div class="field"><label>Postal Code</label><input type="text" id="c-postal" placeholder="2000"></div>
+        </div>
+      </div>
+      <div id="checkout-err" class="auth-error"></div>
+      <button class="purchase-btn" id="proceed-pay-btn">
+        <i class="fa-solid fa-lock"></i> Proceed to Secure Payment
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN PAYFAST FORM -->
+<form id="payfast-form" action="" method="POST" style="display:none;">
+</form>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+  // Theme
+  const themeVal = localStorage.getItem('theme') || 'system';
+  if (themeVal === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (themeVal === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
+
+  let currentUser = null;
+  auth.onAuthStateChanged(u => {
+    currentUser = u;
+    if (u) {
+      // Pre-fill checkout details from Firestore
+      db.collection('users').doc(u.uid).get().then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById('c-name').value  = data.name  || '';
+          document.getElementById('c-email').value = data.email || u.email || '';
+          document.getElementById('c-phone').value = data.phone || '';
+          const addr = data.addresses?.[0];
+          if (addr) {
+            document.getElementById('c-street').value = addr.street   || '';
+            document.getElementById('c-city').value   = addr.city     || '';
+            document.getElementById('c-postal').value = addr.postalCode || '';
+          }
+        }
+      });
+    }
+  });
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.className = `toast show ${type}`;
+    document.getElementById('toast-msg').textContent = msg;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  // ─── CART STATE ────────────────────────────────────────────
+  function getCart() {
+    return JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+  }
+  function saveCart(cart) {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderCart();
+  }
+
+  // ─── RENDER CART ───────────────────────────────────────────
+  function renderCart() {
+    const cart    = getCart();
+    const content = document.getElementById('cart-content');
+    const items   = cart.items || [];
+
+    if (items.length === 0) {
+      content.innerHTML = `
+        <div style="text-align:center;padding:80px 20px;">
+          <i class="fa-solid fa-bag-shopping" style="font-size:56px;color:var(--muted);opacity:0.4;margin-bottom:20px;display:block;"></i>
+          <h2 style="margin-bottom:8px;">Your cart is empty</h2>
+          <p style="color:var(--muted);margin-bottom:24px;">Add some products to get started!</p>
+          <a href="index.html" class="btn-primary">Browse Products</a>
+        </div>`;
+      return;
+    }
+
+    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const shipping = 0; // Free collection; delivery calculated separately
+    const total    = subtotal + shipping;
+
+    content.innerHTML = `
+      <div style="padding-top:12px;">
+        ${items.map((item, idx) => `
+          <div class="cart-item">
+            ${item.image
+              ? `<img src="${item.image}" alt="${item.name}">`
+              : `<div class="cart-item-img-placeholder"><i class="fa-solid fa-trophy"></i></div>`}
+            <div class="cart-item-info">
+              <div class="cart-item-name">${item.name}</div>
+              <div class="cart-item-price">R${(item.price * item.quantity).toFixed(2)}</div>
+              <div class="cart-item-controls">
+                <div class="qty-control">
+                  <button onclick="changeQty(${idx}, -1)"><i class="fa-solid fa-minus"></i></button>
+                  <span>${item.quantity}</span>
+                  <button onclick="changeQty(${idx}, 1)"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <button class="btn-danger btn-sm" onclick="removeItem(${idx})">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>`).join('')}
+
+        <div class="cart-summary">
+          <div class="summary-row">
+            <span>Subtotal (${items.reduce((s,i)=>s+i.quantity,0)} items)</span>
+            <span>R${subtotal.toFixed(2)}</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span style="color:#1a7a3a;">Calculated at checkout</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span>R${subtotal.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <button class="purchase-btn" onclick="startCheckout()">
+          <i class="fa-solid fa-lock"></i> Purchase Securely
+        </button>
+
+        <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px;">
+          <i class="fa-solid fa-shield-halved"></i> Secured by PayFast · 256-bit SSL
+        </p>
+      </div>`;
+  }
+
+  function changeQty(idx, delta) {
+    const cart = getCart();
+    const item = cart.items[idx];
+    if (!item) return;
+    const newQty = item.quantity + delta;
+    if (newQty < 1) { removeItem(idx); return; }
+    if (newQty > item.stock) { showToast('Not enough stock', 'error'); return; }
+    item.quantity = newQty;
+    saveCart(cart);
+  }
+
+  function removeItem(idx) {
+    const cart = getCart();
+    cart.items.splice(idx, 1);
+    saveCart(cart);
+    showToast('Item removed');
+  }
+
+  // ─── CHECKOUT FLOW ─────────────────────────────────────────
+  function startCheckout() {
+    const cart = getCart();
+    if (!cart.items.length) return;
+
+    if (!currentUser) {
+      window.location.href = `login.html?redirect=cart.html`;
+      return;
+    }
+    if (!currentUser.emailVerified) {
+      showToast('Please verify your email first', 'error');
+      return;
+    }
+
+    document.getElementById('checkout-modal').classList.add('open');
+  }
+
+  // Delivery type toggle
+  document.querySelectorAll('input[name="delivery-type"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isDelivery = document.getElementById('r-delivery').checked;
+      document.getElementById('collect-info').style.display = isDelivery ? 'none' : 'block';
+      document.getElementById('delivery-fields').style.display = isDelivery ? 'flex' : 'none';
+    });
+  });
+
+  // Close modal on backdrop
+  document.getElementById('checkout-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('checkout-modal')) {
+      document.getElementById('checkout-modal').classList.remove('open');
+    }
+  });
+
+  // ─── PROCEED TO PAYMENT ─────────────────────────────────────
+  document.getElementById('proceed-pay-btn').addEventListener('click', async () => {
+    const name      = document.getElementById('c-name').value.trim();
+    const email     = document.getElementById('c-email').value.trim();
+    const phone     = document.getElementById('c-phone').value.trim();
+    const isDelivery= document.getElementById('r-delivery').checked;
+    const errEl     = document.getElementById('checkout-err');
+    errEl.style.display = 'none';
+
+    if (!name || !email || !phone) {
+      errEl.textContent = 'Please fill in name, email and phone.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    if (isDelivery) {
+      const street  = document.getElementById('c-street').value.trim();
+      const city    = document.getElementById('c-city').value.trim();
+      const province= document.getElementById('c-province').value;
+      const postal  = document.getElementById('c-postal').value.trim();
+      if (!street || !city || !province || !postal) {
+        errEl.textContent = 'Please fill in your full delivery address.';
+        errEl.style.display = 'block';
+        return;
+      }
+    }
+
+    // Check PayFast config
+    if (PAYFAST_CONFIG.MERCHANT_ID === 'FILL_IN_WHEN_AVAILABLE') {
+      errEl.textContent = 'Payment is not yet configured. Please contact us at trophies.badges@gmail.com or WhatsApp +27 83 767 6746 to complete your order.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('proceed-pay-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing payment...';
+
+    try {
+      const cart      = getCart();
+      const subtotal  = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+      const orderId   = db.collection('orders').doc().id;
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0];
+      const lastName  = nameParts.slice(1).join(' ') || '-';
+
+      // Validate stock in real-time against Firestore
+      for (const item of cart.items) {
+        const doc = await db.collection('products').doc(item.productId).get();
+        if (!doc.exists || doc.data().stock < item.quantity) {
+          throw new Error(`"${item.name}" no longer has enough stock. Please update your cart.`);
+        }
+      }
+
+      // Create pending order in Firestore
+      const shippingAddress = isDelivery ? {
+        street:   document.getElementById('c-street').value.trim(),
+        city:     document.getElementById('c-city').value.trim(),
+        province: document.getElementById('c-province').value,
+        postalCode: document.getElementById('c-postal').value.trim(),
+        type: 'delivery'
+      } : { type: 'collection', address: 'Trade Route Mall, Lenasia Ext. 9' };
+
+      await db.collection('orders').doc(orderId).set({
+        userId:    currentUser.uid,
+        userEmail: email,
+        userName:  name,
+        phone,
+        items:     cart.items.map(i => ({
+          productId: i.productId,
+          name:      i.name,
+          price:     i.price,
+          quantity:  i.quantity,
+          image:     i.image
+        })),
+        subtotal,
+        shipping:  0,
+        total:     subtotal,
+        status:    'pending',
+        paymentRef: orderId,
+        shippingAddress,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Build PayFast form
+      const pfUrl = PAYFAST_CONFIG.SANDBOX
+        ? 'https://sandbox.payfast.co.za/eng/process'
+        : 'https://www.payfast.co.za/eng/process';
+
+      const currentDomain = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '');
+
+      const pfData = {
+        merchant_id:   PAYFAST_CONFIG.MERCHANT_ID,
+        merchant_key:  PAYFAST_CONFIG.MERCHANT_KEY,
+        return_url:    `${currentDomain}/payment-success.html?order=${orderId}`,
+        cancel_url:    `${currentDomain}/cart.html`,
+        name_first:    firstName,
+        name_last:     lastName,
+        email_address: email,
+        m_payment_id:  orderId,
+        amount:        subtotal.toFixed(2),
+        item_name:     `Trophies & Badges Order (${cart.items.length} item${cart.items.length>1?'s':''})`,
+        item_description: cart.items.map(i => `${i.name} ×${i.quantity}`).join(', ').substring(0, 255)
+      };
+
+      if (PAYFAST_CONFIG.PASSPHRASE) pfData.passphrase = PAYFAST_CONFIG.PASSPHRASE;
+
+      // Generate signature
+      const sigString = Object.entries(pfData)
+        .map(([k, v]) => `${k}=${encodeURIComponent(String(v).trim()).replace(/%20/g, '+')}`)
+        .join('&');
+      pfData.signature = md5(sigString);
+      delete pfData.passphrase;
+
+      // Build & submit form
+      const form = document.getElementById('payfast-form');
+      form.action = pfUrl;
+      form.innerHTML = Object.entries(pfData)
+        .map(([k, v]) => `<input type="hidden" name="${k}" value="${v}">`)
+        .join('');
+      form.submit();
+
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-lock"></i> Proceed to Secure Payment';
+    }
+  });
+
+  // ─── INIT ──────────────────────────────────────────────────
+  renderCart();
+</script>
+<script>
+  function toggleMenu() { document.getElementById('mobile-menu')?.classList.toggle('open'); }
+  (function updateNavBadge(){
+    var c = JSON.parse(localStorage.getItem('cart')||'{"items":[]}');
+    var n = (c.items||[]).reduce(function(s,i){return s+i.quantity;},0);
+    var el=document.getElementById('cart-count'), mel=document.getElementById('mobile-cart-count');
+    if(el){el.textContent=n;el.classList.toggle('show',n>0);}
+    if(mel){mel.textContent=n>0?n:'';mel.classList.toggle('show',n>0);}
+  })();
+</script>
+<script src="tb-cursor.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  // Apply saved theme immediately to prevent flash
+  (function(){
+    var t = localStorage.getItem('theme') || 'system';
+    if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else if(t==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.setAttribute('data-theme','dark');
+  })();
+</script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-logo" style="flex:1;text-align:center;">Order Confirmed</div>
+</nav>
+
+<main class="page">
+  <div id="success-content" style="text-align:center;padding:60px 24px 24px;">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:40px;color:var(--primary);"></i>
+    <p style="margin-top:16px;color:var(--muted);">Confirming your order...</p>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="index.html"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
+  <a href="cart.html"><i class="fa-solid fa-bag-shopping"></i><span>Cart</span></a>
+  <a href="account.html"><i class="fa-solid fa-user"></i><span>Account</span></a>
+</nav>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+  // Theme
+  const themeVal = localStorage.getItem('theme') || 'system';
+  if (themeVal === 'dark') document.documentElement.dataset.theme = 'dark';
+  else if (themeVal === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    document.documentElement.dataset.theme = 'dark';
+
+  const orderId = new URLSearchParams(location.search).get('order');
+
+  async function confirmOrder() {
+    const content = document.getElementById('success-content');
+
+    if (!orderId) {
+      content.innerHTML = `
+        <i class="fa-solid fa-circle-xmark" style="font-size:60px;color:var(--accent);margin-bottom:20px;display:block;"></i>
+        <h2>No order found</h2>
+        <a href="index.html" class="btn btn-primary mt-16">Back to Shop</a>`;
+      return;
+    }
+
+    try {
+      // Mark order as paid
+      await db.collection('orders').doc(orderId).update({
+        status:    'paid',
+        paidAt:    firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Fetch order details
+      const orderDoc = await db.collection('orders').doc(orderId).get();
+      const order    = orderDoc.data();
+
+      // Deduct stock for each item
+      const batch = db.batch();
+      for (const item of (order.items || [])) {
+        const ref = db.collection('products').doc(item.productId);
+        batch.update(ref, {
+          stock: firebase.firestore.FieldValue.increment(-item.quantity)
+        });
+      }
+      await batch.commit();
+
+      // Clear cart
+      localStorage.removeItem('cart');
+
+      // Send confirmation email via EmailJS
+      if (EMAILJS_CONFIG.PUBLIC_KEY !== 'FILL_IN_FROM_EMAILJS') {
+        try {
+          emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+          const itemsList = (order.items || [])
+            .map(i => `${i.name} × ${i.quantity} — R${(i.price * i.quantity).toFixed(2)}`)
+            .join('\n');
+
+          await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, {
+            to_name:    order.userName   || 'Customer',
+            to_email:   order.userEmail  || '',
+            order_id:   orderId.slice(0, 8).toUpperCase(),
+            order_items: itemsList,
+            order_total: `R${(order.total || 0).toFixed(2)}`,
+            delivery_type: order.shippingAddress?.type === 'collection'
+              ? 'Collection — Trade Route Mall, Lenasia Ext. 9'
+              : `Delivery to: ${order.shippingAddress?.street}, ${order.shippingAddress?.city}`,
+            business_phone: BUSINESS_INFO.phone1,
+            business_email: BUSINESS_INFO.email
+          });
+        } catch (emailErr) {
+          console.warn('Email send failed:', emailErr);
+          // Non-critical — order still confirmed
+        }
+      }
+
+      // Render success screen
+      const itemsHtml = (order.items || []).map(item => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);text-align:left;">
+          ${item.image
+            ? `<img src="${item.image}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;" alt="${item.name}">`
+            : `<div style="width:48px;height:48px;border-radius:8px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-trophy" style="color:var(--primary);"></i></div>`
+          }
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:14px;">${item.name}</div>
+            <div style="font-size:13px;color:var(--muted);">Qty: ${item.quantity}</div>
+          </div>
+          <div style="font-weight:700;font-size:14px;">R${(item.price * item.quantity).toFixed(2)}</div>
+        </div>`).join('');
+
+      const deliveryText = order.shippingAddress?.type === 'collection'
+        ? '📍 Collection — Trade Route Mall, Lenasia Ext. 9'
+        : `🚚 Delivery to: ${order.shippingAddress?.street}, ${order.shippingAddress?.city}, ${order.shippingAddress?.province}`;
+
+      content.innerHTML = `
+        <div style="animation: fadeIn 0.5s ease;">
+          <div style="width:80px;height:80px;border-radius:50%;background:#e6f7ec;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <i class="fa-solid fa-circle-check" style="font-size:40px;color:#1a7a3a;"></i>
+          </div>
+          <h1 style="font-size:24px;font-weight:900;margin-bottom:8px;">Order Confirmed!</h1>
+          <p style="color:var(--muted);font-size:15px;margin-bottom:24px;">
+            Thank you, <strong>${order.userName || 'Customer'}</strong>!<br>
+            A confirmation has been sent to <strong>${order.userEmail || ''}</strong>
+          </p>
+
+          <div style="background:var(--surface);border-radius:var(--radius-md);padding:20px;text-align:left;border:1px solid var(--border);margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+              <span style="font-size:13px;color:var(--muted);">Order reference</span>
+              <strong style="font-family:monospace;">${orderId.slice(0,8).toUpperCase()}</strong>
+            </div>
+            ${itemsHtml}
+            <div style="display:flex;justify-content:space-between;padding-top:12px;font-size:17px;font-weight:900;">
+              <span>Total Paid</span>
+              <span style="color:var(--primary);">R${(order.total || 0).toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div style="background:var(--primary-light);border-radius:var(--radius-md);padding:14px;font-size:14px;color:var(--primary);margin-bottom:20px;font-weight:600;">
+            ${deliveryText}
+          </div>
+
+          <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:14px;font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7;">
+            Need help? Contact us:<br>
+            📞 ${BUSINESS_INFO.phone1} · ${BUSINESS_INFO.phone2}<br>
+            ✉️ ${BUSINESS_INFO.email}
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <a href="account.html#orders" class="btn btn-primary btn-full">
+              <i class="fa-solid fa-receipt"></i> View My Orders
+            </a>
+            <a href="index.html" class="btn btn-ghost btn-full">
+              <i class="fa-solid fa-arrow-left"></i> Continue Shopping
+            </a>
+          </div>
+        </div>`;
+
+    } catch (err) {
+      console.error('Order confirmation error:', err);
+      document.getElementById('success-content').innerHTML = `
+        <i class="fa-solid fa-circle-exclamation" style="font-size:48px;color:#f90;margin-bottom:16px;display:block;"></i>
+        <h2 style="margin-bottom:8px;">Payment received</h2>
+        <p style="color:var(--muted);margin-bottom:20px;">
+          Your payment was processed but we had trouble updating your order.<br>
+          Please contact us with reference: <strong>${orderId?.slice(0,8).toUpperCase()}</strong>
+        </p>
+        <p style="font-size:14px;">📞 ${BUSINESS_INFO.phone1}</p>
+        <a href="index.html" class="btn btn-primary mt-16">Back to Shop</a>`;
+    }
+  }
+
+  confirmOrder();
+
+  // Fade-in animation
+  const style = document.createElement('style');
+  style.textContent = '@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }';
+  document.head.appendChild(style);
+</script>
+<script>function toggleMenu(){document.getElementById("mobile-menu")?.classList.toggle("open");}</script>
+<script>
+  // Cart badge update
+  (function updateBadges(){
+    var cart = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+    var count = (cart.items||[]).reduce(function(s,i){return s+i.quantity;},0);
+    var el  = document.getElementById('cart-count');
+    var mel = document.getElementById('mobile-cart-count');
+    if(el){ el.textContent=count; el.classList.toggle('show',count>0); }
+    if(mel){ mel.textContent=count>0?count:''; mel.classList.toggle('show',count>0); }
+  })();
+  function toggleMenu(){ document.getElementById('mobile-menu')?.classList.toggle('open'); }
+</script>
+<script src="tb-cursor.js" defer></script>
+</body>
+</html>

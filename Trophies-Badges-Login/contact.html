@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Trophies & Badges</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+  // Apply saved theme immediately to prevent flash
+  (function(){
+    var t = localStorage.getItem('theme') || 'system';
+    if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else if(t==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.setAttribute('data-theme','dark');
+  })();
+</script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <a href="index.html" class="logo">Trophies & Badges</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="products.html">Products</a>
+    <a href="about.html">About</a>
+    <a href="contact.html" class="active">Contact</a>
+    <a href="cart.html" class="nav-cart">
+      <i class="fa-solid fa-bag-shopping"></i> Cart
+      <span class="nav-cart-count" id="cart-count">0</span>
+    </a>
+    <a href="account.html" style="margin-left:10px;"><i class="fa-solid fa-user"></i></a>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="index.html">Home</a>
+  <a href="products.html">Products</a>
+  <a href="about.html">About</a>
+  <a href="contact.html" class="active">Contact</a>
+  <a href="cart.html">Cart <span class="mobile-cart-count" id="mobile-cart-count"></span></a>
+  <a href="account.html">My Account</a>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <h1>Contact Us</h1>
+  <p>We're here to help! Get in touch with our team.</p>
+</section>
+
+<!-- CONTACT -->
+<section class="contact">
+  <div class="contact-container">
+
+    <p><strong>Phone:</strong><br>
+      <a href="tel:+27837676746">+27 83 767 6746</a><br>
+      <a href="tel:+27817524685">+27 81 752 4685</a>
+    </p>
+
+    <p><strong>Email:</strong><br>
+      <a href="mailto:trophies.badges@gmail.com">trophies.badges@gmail.com</a>
+    </p>
+
+    <p>
+      <strong>Address:</strong><br>
+      Trade Route Mall<br>
+      Cnr K43 & Nirvana Rd<br>
+      Lenasia Ext 9, Gauteng, South Africa
+    </p>
+
+    <p style="margin-top:20px;">
+      <a href="https://wa.me/27837676746" target="_blank" class="btn-primary" style="display:inline-flex;margin:0 auto;">
+        <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+      </a>
+    </p>
+
+    <!-- Google Map -->
+    <div class="map">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3309.2356017788177!2d28.14984911526028!3d-26.12802788349753!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e950621f1d7f041%3A0xb87bc80b4a4b1d9e!2sTrade%20Route%20Mall%2C%20Lenasia%201827%2C%20South%20Africa!5e0!3m2!1sen!2sza!4v1700000000000!5m2!1sen!2sza"
+        width="100%"
+        height="300"
+        style="border:0;border-radius:16px;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div><h4>Address</h4><p>Trade Route Mall<br>Cnr Nirvana Rd & K43<br>Lenasia Ext. 9</p></div>
+    <div><h4>Phone</h4><p><a href="tel:+27837676746">+27 83 767 6746</a><br><a href="tel:+27817524685">+27 81 752 4685</a></p></div>
+    <div><h4>Email</h4><p><a href="mailto:trophies.badges@gmail.com">trophies.badges@gmail.com</a></p></div>
+    <div><h4>Quick Links</h4><p><a href="products.html">Shop</a><br><a href="about.html">About Us</a><br><a href="account.html">My Account</a></p></div>
+  </div>
+  <p class="copyright">© 2026 Trophies & Badges</p>
+</footer>
+
+<script>
+  function updateCartBadge() {
+    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
+    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
+    const el    = document.getElementById('cart-count');
+    if (el) { el.textContent = count; el.classList.toggle('show', count > 0); }
+  }
+  updateCartBadge();
+  function toggleMenu() { document.getElementById('mobile-menu').classList.toggle('open'); }
+</script>
+<script src="tb-cursor.js" defer></script>
+</body>
+</html>

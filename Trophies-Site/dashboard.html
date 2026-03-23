@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Trophies & Badges Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;}
+    :root{
+      --primary:#2f308d;--primary-dark:#1c1d66;--accent:#f4070d;
+      --bg:#f0f0f7;--surface:#fff;--text:#111;--muted:#666;
+      --border:rgba(0,0,0,0.1);--radius:14px;--sidebar:240px;
+    }
+    body{background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+
+    /* SIDEBAR */
+    .sidebar{
+      width:var(--sidebar);background:var(--primary);color:#fff;
+      display:flex;flex-direction:column;position:fixed;top:0;left:0;
+      height:100vh;z-index:200;transition:transform 0.3s;
+    }
+    .sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
+    .sidebar-logo img{width:44px;height:44px;border-radius:50%;object-fit:contain;margin-bottom:10px;background:#fff;padding:4px;}
+    .sidebar-logo h2{font-size:16px;font-weight:700;line-height:1.3;}
+    .sidebar-logo p{font-size:11px;opacity:0.65;margin-top:2px;}
+    nav.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto;}
+    nav.sidebar-nav a{
+      display:flex;align-items:center;gap:12px;
+      padding:11px 14px;border-radius:10px;
+      color:rgba(255,255,255,0.75);text-decoration:none;font-size:14px;font-weight:500;
+      margin-bottom:4px;transition:0.2s;cursor:pointer;
+    }
+    nav.sidebar-nav a:hover,nav.sidebar-nav a.active{
+      background:rgba(255,255,255,0.15);color:#fff;
+    }
+    nav.sidebar-nav a i{width:18px;text-align:center;font-size:15px;}
+    .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.15);}
+    .btn-logout{
+      display:flex;align-items:center;gap:10px;
+      width:100%;padding:11px 14px;border-radius:10px;
+      background:rgba(244,7,13,0.2);color:#fff;border:none;cursor:pointer;
+      font-size:14px;font-weight:500;transition:0.2s;
+    }
+    .btn-logout:hover{background:rgba(244,7,13,0.4);}
+
+    /* MAIN */
+    .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{
+      background:var(--surface);padding:16px 28px;
+      display:flex;align-items:center;justify-content:space-between;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06);position:sticky;top:0;z-index:100;
+    }
+    .topbar h1{font-size:20px;font-weight:700;}
+    .topbar-right{display:flex;align-items:center;gap:14px;}
+    .admin-badge{
+      background:var(--primary);color:#fff;padding:6px 14px;
+      border-radius:20px;font-size:13px;font-weight:600;
+    }
+    .content{padding:28px;flex:1;}
+
+    /* SECTIONS */
+    .section{display:none;}
+    .section.active{display:block;}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-bottom:32px;}
+    .stat-card{
+      background:var(--surface);border-radius:var(--radius);padding:24px;
+      box-shadow:0 4px 0 var(--primary),0 8px 20px rgba(0,0,0,0.08);
+    }
+    .stat-card .stat-icon{font-size:24px;color:var(--primary);margin-bottom:12px;}
+    .stat-card .stat-value{font-size:32px;font-weight:800;margin-bottom:4px;}
+    .stat-card .stat-label{font-size:13px;color:var(--muted);}
+
+    /* CARD */
+    .card{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:24px;}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+    .card-header h2{font-size:17px;font-weight:700;}
+
+    /* BUTTONS */
+    .btn{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:0.2s;display:inline-flex;align-items:center;gap:8px;}
+    .btn-primary{background:var(--primary);color:#fff;}
+    .btn-primary:hover{background:var(--primary-dark);}
+    .btn-danger{background:#fff0f0;color:#d00;border:1px solid #fcc;}
+    .btn-danger:hover{background:#d00;color:#fff;}
+    .btn-edit{background:#f0f4ff;color:var(--primary);border:1px solid #dde;}
+    .btn-edit:hover{background:var(--primary);color:#fff;}
+    .btn-sm{padding:7px 13px;font-size:13px;}
+
+    /* FORM */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+    @media(max-width:700px){.form-grid{grid-template-columns:1fr;}}
+    .form-full{grid-column:1/-1;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-size:13px;font-weight:600;color:#444;}
+    .field input,.field textarea,.field select{
+      padding:11px 14px;border:1.5px solid #e0e0e0;border-radius:10px;
+      font-size:14px;outline:none;background:#fafafa;transition:border-color 0.2s;
+      width:100%;
+    }
+    .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);background:#fff;}
+    .field textarea{resize:vertical;min-height:90px;}
+
+    /* FILE UPLOAD */
+    .upload-zone{
+      border:2px dashed #d0d0e0;border-radius:12px;padding:30px 20px;
+      text-align:center;cursor:pointer;transition:0.2s;background:#fafafe;
+    }
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:#f0f0fa;}
+    .upload-zone i{font-size:28px;color:var(--primary);margin-bottom:10px;}
+    .upload-zone p{font-size:14px;color:var(--muted);}
+    .upload-zone input[type=file]{display:none;}
+    .preview-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+    .preview-item{position:relative;width:80px;height:80px;}
+    .preview-item img,.preview-item video{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+    .preview-item .remove-preview{
+      position:absolute;top:-6px;right:-6px;background:#d00;color:#fff;
+      border:none;border-radius:50%;width:20px;height:20px;
+      font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    }
+
+    /* PRODUCTS TABLE */
+    .product-table{width:100%;border-collapse:collapse;}
+    .product-table th{
+      text-align:left;padding:12px 14px;font-size:13px;color:var(--muted);
+      font-weight:600;border-bottom:2px solid var(--border);background:#fafafe;
+    }
+    .product-table td{padding:14px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle;}
+    .product-table tr:last-child td{border-bottom:none;}
+    .product-table tr:hover td{background:#f9f9fd;}
+    .product-img-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+    .product-name-cell{font-weight:600;}
+    .stock-badge{
+      padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;
+    }
+    .stock-badge.in-stock{background:#e6f7ec;color:#1a7a3a;}
+    .stock-badge.low-stock{background:#fff7e0;color:#a07000;}
+    .stock-badge.out-of-stock{background:#fff0f0;color:#c00;}
+    .category-tag{
+      background:#eef0fa;color:var(--primary);padding:3px 10px;
+      border-radius:20px;font-size:12px;font-weight:600;
+    }
+    .actions-cell{display:flex;gap:8px;}
+
+    /* CATEGORIES */
+    .cat-list{display:flex;flex-wrap:wrap;gap:10px;}
+    .cat-chip{
+      display:flex;align-items:center;gap:8px;
+      background:#eef0fa;border:1px solid #d0d4f0;border-radius:20px;
+      padding:6px 14px;font-size:14px;font-weight:500;
+    }
+    .cat-chip button{
+      background:none;border:none;color:#999;cursor:pointer;font-size:13px;padding:0;
+      display:flex;align-items:center;
+    }
+    .cat-chip button:hover{color:#d00;}
+    .add-cat-row{display:flex;gap:10px;margin-top:14px;}
+    .add-cat-row input{
+      flex:1;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:10px;
+      font-size:14px;outline:none;
+    }
+    .add-cat-row input:focus{border-color:var(--primary);}
+
+    /* ORDERS TABLE */
+    .order-status{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+    .order-status.paid{background:#e6f7ec;color:#1a7a3a;}
+    .order-status.pending{background:#fff7e0;color:#a07000;}
+    .order-status.shipped{background:#e0f0ff;color:#0060b0;}
+    .order-status.delivered{background:#e6f7ec;color:#1a7a3a;}
+    .order-status.cancelled{background:#fff0f0;color:#c00;}
+
+    /* MODAL */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.5);
+      z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;
+    }
+    .modal-overlay.open{display:flex;}
+    .modal{
+      background:var(--surface);border-radius:20px;padding:32px;
+      width:100%;max-width:680px;max-height:90vh;overflow-y:auto;
+    }
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+    .modal-header h2{font-size:19px;font-weight:700;}
+    .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px;}
+    .modal-close:hover{color:var(--text);}
+    .modal-footer{display:flex;justify-content:flex-end;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+
+    /* TOAST */
+    .toast{
+      position:fixed;bottom:24px;right:24px;
+      background:#111;color:#fff;padding:14px 20px;
+      border-radius:12px;font-size:14px;z-index:9999;
+      display:none;align-items:center;gap:10px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2);
+    }
+    .toast.show{display:flex;}
+    .toast.success{background:#1a7a3a;}
+    .toast.error{background:#c00;}
+
+    /* PROGRESS BAR */
+    .upload-progress{
+      height:6px;background:#e0e0e0;border-radius:3px;
+      margin-top:10px;overflow:hidden;display:none;
+    }
+    .upload-progress-bar{height:100%;background:var(--primary);border-radius:3px;transition:width 0.3s;width:0%;}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+    .empty-state i{font-size:48px;margin-bottom:16px;opacity:0.4;}
+    .empty-state p{font-size:15px;}
+
+    /* RESPONSIVE */
+    .hamburger{display:none;background:none;border:none;font-size:22px;cursor:pointer;padding:4px;}
+    @media(max-width:900px){
+      .sidebar{transform:translateX(-100%);}
+      .sidebar.open{transform:translateX(0);}
+      .main{margin-left:0;}
+      .hamburger{display:block;}
+      .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;display:none;}
+      .sidebar-overlay.open{display:block;}
+    }
+    .loading-row td{text-align:center;padding:30px;color:var(--muted);}
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY (MOBILE) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <img src="images/TandB.png" alt="Logo">
+    <h2>Trophies & Badges</h2>
+    <p>Admin Portal</p>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="active" data-section="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    <a data-section="products"><i class="fa-solid fa-box"></i> Products</a>
+    <a data-section="categories"><i class="fa-solid fa-tags"></i> Categories</a>
+    <a data-section="orders"><i class="fa-solid fa-receipt"></i> Orders</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn-logout" id="logout-btn">
+      <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+      <h1 id="page-title">Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <span class="admin-badge"><i class="fa-solid fa-shield-halved"></i> Admin</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD SECTION -->
+    <section class="section active" id="section-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+          <div class="stat-value" id="stat-products">—</div>
+          <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-tags"></i></div>
+          <div class="stat-value" id="stat-categories">—</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-receipt"></i></div>
+          <div class="stat-value" id="stat-orders">—</div>
+          <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+          <div class="stat-value" id="stat-reviews">—</div>
+          <div class="stat-label">Reviews</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>Recent Orders</h2></div>
+        <table class="product-table" id="recent-orders-table">
+          <thead>
+            <tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody id="recent-orders-body">
+            <tr class="loading-row"><td colspan="5"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PRODUCTS SECTION -->
+    <section class="section" id="section-products">
+      <div class="card">
+        <div class="card-header">
+          <h2>All Products</h2>
+          <button class="btn btn-primary" id="open-add-modal">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="product-table">
+            <thead>
+              <tr>
+                <th>Image</th><th>Title</th><th>Category</th>
+                <th>Price</th><th>Stock</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-body">
+              <tr class="loading-row"><td colspan="6"><i class="fa-solid fa-spinner fa-spin"></i> Loading products...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES SECTION -->
+    <section class="section" id="section-categories">
+      <div class="card">
+        <div class="card-header"><h2>Product Categories</h2></div>
+        <div class="cat-list" id="cat-list"></div>
+        <div class="add-cat-row">
+          <input type="text" id="new-cat-input" placeholder="New category name...">
+          <button class="btn btn-primary" id="add-cat-btn"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ORDERS SECTION -->
+    <section class="section" id="section-orders">
+      <div class="card">
+        <div class="card-header"><h2>All Orders</h2></div>
+        <div style="overflow-x:auto;">
+          <table class="product-table">
+            <thead>
+              <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="orders-body">
+              <tr class="loading-row"><td colspan="7"><i class="fa-solid fa-spinner fa-spin"></i> Loading orders...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Add New Product</h2>
+      <button class="modal-close" id="close-modal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <input type="hidden" id="edit-product-id">
+
+    <div class="form-grid">
+      <div class="field form-full">
+        <label>Product Title *</label>
+        <input type="text" id="p-name" placeholder="e.g. Gold Championship Trophy">
+      </div>
+      <div class="field form-full">
+        <label>Description *</label>
+        <textarea id="p-desc" placeholder="Describe the product, materials, sizes available..."></textarea>
+      </div>
+      <div class="field">
+        <label>Price (R) *</label>
+        <input type="number" id="p-price" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label>Stock Quantity *</label>
+        <input type="number" id="p-stock" placeholder="0" min="0">
+      </div>
+      <div class="field form-full">
+        <label>Category *</label>
+        <select id="p-category">
+          <option value="">Select a category...</option>
+        </select>
+      </div>
+
+      <!-- IMAGE UPLOAD -->
+      <div class="field form-full">
+        <label>Product Images (JPEG, PNG, WebP)</label>
+        <div class="upload-zone" id="img-upload-zone">
+          <input type="file" id="p-images" accept="image/jpeg,image/png,image/webp" multiple>
+          <i class="fa-solid fa-images"></i>
+          <p>Click or drag images here<br><small>Multiple images allowed</small></p>
+        </div>
+        <div class="preview-grid" id="img-preview"></div>
+        <!-- Existing images (edit mode) -->
+        <div id="existing-images-wrap" style="display:none;margin-top:10px;">
+          <p style="font-size:13px;color:#666;margin-bottom:8px;">Current images (click × to remove):</p>
+          <div class="preview-grid" id="existing-img-preview"></div>
+        </div>
+      </div>
+
+      <!-- VIDEO UPLOAD -->
+      <div class="field form-full">
+        <label>Product Video — optional (MP4, WebM)</label>
+        <div class="upload-zone" id="vid-upload-zone">
+          <input type="file" id="p-video" accept="video/mp4,video/webm">
+          <i class="fa-solid fa-video"></i>
+          <p>Click or drag a video here<br><small>One video per product</small></p>
+        </div>
+        <div id="vid-preview"></div>
+        <div id="existing-video-wrap" style="display:none;margin-top:10px;">
+          <p style="font-size:13px;color:#666;margin-bottom:8px;">Current video:</p>
+          <div id="existing-vid-preview"></div>
+        </div>
+      </div>
+
+      <div class="field form-full">
+        <div class="upload-progress" id="upload-progress">
+          <div class="upload-progress-bar" id="upload-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" id="cancel-modal">Cancel</button>
+      <button class="btn btn-primary" id="save-product-btn">
+        <i class="fa-solid fa-floppy-disk"></i> <span id="save-btn-text">Save Product</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check" id="toast-icon"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
