@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     const callerEmail = decodedToken.email || "";
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "trophies.badges@gmail.com";
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "kabelomaile73@gmail.com";
 
     // Allow if caller is already admin, or if caller email matches ADMIN_EMAIL
     if (decodedToken.admin === true || callerEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {

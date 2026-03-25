@@ -216,7 +216,15 @@
         const tokenResult = await user.getIdTokenResult(true);
 
         if (tokenResult.claims.admin === true) {
-          // Already an admin — proceed
+          // Check email verification
+          if (!user.emailVerified) {
+            await auth.signOut();
+            showError('Please verify your email before signing in. Check your inbox for a verification link.');
+            loginBtn.style.display = 'block';
+            loading.style.display  = 'none';
+            return;
+          }
+          // Admin verified — proceed
           window.location.href = 'dashboard.html';
         } else {
             // Not an admin yet — try first-time setup via Vercel API
@@ -238,6 +246,17 @@
 
               // Re-fetch token with new claims
               await user.getIdToken(true);
+
+              // Send verification email if not yet verified
+              if (!user.emailVerified) {
+                await user.sendEmailVerification();
+                await auth.signOut();
+                showError('Admin access granted! A verification email has been sent to your inbox. Please verify your email, then sign in again.');
+                loginBtn.style.display = 'block';
+                loading.style.display  = 'none';
+                return;
+              }
+
               window.location.href = 'dashboard.html';
             } catch (claimErr) {
             await auth.signOut();
@@ -266,18 +285,6 @@
       errorMsg.style.display = 'block';
     }
 
-    // AUTO LOGIN FOR TESTING FUNCTIONALITY
-    document.addEventListener("DOMContentLoaded", () => {
-      // Small delay to ensure firebase is initialized
-      setTimeout(() => {
-        if (!auth.currentUser) {
-          console.log("Auto-login triggered for testing.");
-          emailInput.value = "admin@trophiesandbadges.co.za";
-          passInput.value = "password";
-          loginBtn.click();
-        }
-      }, 800);
-    });
   </script>
 
 </body>

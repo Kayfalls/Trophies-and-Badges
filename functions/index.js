@@ -4,27 +4,11 @@
 
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const md5 = require("md5");
-const fetch = require("node-fetch");
 
 admin.initializeApp();
-const db = admin.firestore();
 
 // ─── ENVIRONMENT VARIABLES ──────────────────────────────────
-// Set via functions/.env or Firebase Functions config
-const PF_MERCHANT_ID  = process.env.PAYFAST_MERCHANT_ID  || "";
-const PF_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY || "";
-const PF_PASSPHRASE   = process.env.PAYFAST_PASSPHRASE   || "";
-const PF_SANDBOX      = process.env.PAYFAST_SANDBOX === "true";
-
-const EJS_PUBLIC_KEY  = process.env.EMAILJS_PUBLIC_KEY  || "";
-const EJS_SERVICE_ID  = process.env.EMAILJS_SERVICE_ID  || "";
-const EJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || "";
-
-const ADMIN_EMAIL     = process.env.ADMIN_EMAIL || "trophies.badges@gmail.com";
-
-
-
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "kabelomaile73@gmail.com";
 
 
 // =============================================================
