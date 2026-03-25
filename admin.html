@@ -188,7 +188,7 @@
     auth.onAuthStateChanged(async user => {
       if (user) {
         const tokenResult = await user.getIdTokenResult();
-        if (tokenResult.claims.admin === true) {
+        if (tokenResult.claims.admin === true && user.emailVerified) {
           window.location.href = 'dashboard.html';
         }
       }
