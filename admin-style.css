@@ -1,40 +1,44 @@
-/* RESET */
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',system-ui,sans-serif;
+/* ─── CSS VARIABLES ───────────────────────────────────────── */
+:root {
+  --bg:            #f4f4f6;
+  --surface:       #ffffff;
+  --text:          #111111;
+  --nav-bg:        #ffffff;
+  --hero-bg:       radial-gradient(circle at top, #ffffff, #e9e9e9);
+  --border:        rgba(0,0,0,0.1);
+  --shadow:        0 4px 10px rgba(0,0,0,0.1);
 }
 
+[data-theme="dark"] {
+  --bg:            #0e0e16;
+  --surface:       #171723;
+  --text:          #f0f0f8;
+  --nav-bg:        #13131e;
+  --hero-bg:       radial-gradient(circle at top, #1a1a2e, #0e0e16);
+  --border:        rgba(255,255,255,0.08);
+  --shadow:        0 4px 10px rgba(0,0,0,0.4);
+}
 
 /* BODY */
-
-body{
-background:#f4f4f6;
-color:#111;
-line-height:1.6;
+body {
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
 }
 
 
 /* NAVBAR */
 
-.nav{
-
-display:flex;
-justify-content:space-between;
-align-items:center;
-
-padding:20px 8%;
-
-background:#fff;
-
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-
-position:sticky;
-top:0;
-z-index:100;
-
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 8%;
+  background: var(--nav-bg);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .logo{
@@ -61,16 +65,10 @@ color:#f4070d;
 
 /* HERO */
 
-.hero{
-
-padding:120px 8%;
-
-text-align:center;
-
-background:
-
-radial-gradient(circle at top,#ffffff,#e9e9e9);
-
+.hero {
+  padding: 120px 8%;
+  text-align: center;
+  background: var(--hero-bg);
 }
 
 .hero h1{
@@ -194,9 +192,8 @@ padding:40px 25px;
 
 border-radius:20px;
 
-background:#fff;
-
-border:1px solid rgba(0,0,0,0.1);
+background: var(--surface);
+border: 1px solid var(--border);
 
 box-shadow:
 0 12px 0 #2f308d,
@@ -325,7 +322,7 @@ opacity:0.7;
 .hero {
   padding: 60px 8% 120px; /* reduced top padding from 140px → 60px */
   text-align: center;
-  background: radial-gradient(circle at top, #ffffff, #e9e9e9);
+  background: var(--hero-bg);
 }
 
 .hero-logo {
@@ -334,7 +331,7 @@ opacity:0.7;
   margin: 0 auto 40px;   /* smaller bottom margin */
   border-radius: 50%;
   overflow: hidden;
-  background: radial-gradient(circle at center, #fff, #f0f0f0);
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -525,8 +522,7 @@ padding:120px 8% 80px;
 
 text-align:center;
 
-background:
-radial-gradient(circle at top,#ffffff,#e9e9e9);
+background: var(--hero-bg);
 
 }
 
@@ -573,11 +569,9 @@ gap:14px;
 
 padding:18px 20px;
 
-background:#fff;
-
-border-radius:16px;
-
-border:1px solid rgba(0,0,0,0.08);
+background: var(--surface);
+border-radius: 16px;
+border: 1px solid var(--border);
 
 box-shadow:
 0 8px 0 #2f308d,

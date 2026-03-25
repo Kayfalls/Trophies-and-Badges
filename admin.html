@@ -4,8 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Login | Trophies & Badges</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin-style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script>
+    // Apply saved theme immediately to prevent flash
+    (function(){
+      var t = localStorage.getItem('theme') || 'system';
+      if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
+      else if(t==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.setAttribute('data-theme','dark');
+    })();
+  </script>
   <style>
     .admin-login-wrapper {
       min-height: 100vh;
@@ -158,9 +167,7 @@
 
       <div class="error-msg" id="error-msg"></div>
 
-      <a href="../Trophies-Badges-Login/index.html" class="back-link">
-        <i class="fa-solid fa-arrow-left"></i> Back to site
-      </a>
+      <a href="/" class="back-link">← Back to site</a>
     </div>
   </div>
 
@@ -211,6 +218,7 @@
         if (tokenResult.claims.admin === true) {
           // Already an admin — proceed
           window.location.href = 'dashboard.html';
+        } else {
             // Not an admin yet — try first-time setup via Vercel API
             try {
               const idToken = await user.getIdToken();
