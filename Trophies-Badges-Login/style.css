@@ -594,72 +594,167 @@ a    { text-decoration: none; color: inherit; }
   .cart-page h1   { font-size: 26px; }
 }
 
-/* ─── CUSTOM CURSOR ───────────────────────────────────────── */
-/* Hidden on touch devices — only active on devices with a fine pointer */
-@media (pointer: fine) {
-  body { cursor: none; }
-  a, button, [onclick], .product-card, .category-card,
-  .cat-chip, .menu-item, .qty-control button,
-  input, textarea, select, label[for] { cursor: none; }
 
-  #tb-cursor-dot,
-  #tb-cursor-ring { pointer-events: none; position: fixed; top: 0; left: 0; z-index: 99999; will-change: transform; }
 
-  #tb-cursor-dot {
-    width: 8px; height: 8px;
-    background: #2f308d;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: background 0.15s, transform 0.15s, width 0.15s, height 0.15s;
-  }
+/* ═══════════════════════════════════════════════════════════
+   CATEGORY ICONS — added from Trophies-Site index.html
+   ═══════════════════════════════════════════════════════════ */
 
-  #tb-cursor-ring {
-    width: 36px; height: 36px;
-    border: 2.5px solid #2f308d;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.25s cubic-bezier(.23,1,.32,1),
-                height 0.25s cubic-bezier(.23,1,.32,1),
-                border-color 0.25s,
-                border-radius 0.25s,
-                opacity 0.25s,
-                background 0.25s;
-    opacity: 0.75;
-  }
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 48px 8% 0;
+  background: #f4f4f6;
+  transition: background 0.3s;
+}
 
-  /* On buttons — ring turns red and fills slightly */
-  body.cursor-btn #tb-cursor-dot  { background: #f4070d; transform: translate(-50%,-50%) scale(1.4); }
-  body.cursor-btn #tb-cursor-ring {
-    width: 44px; height: 44px;
-    border-color: #f4070d;
-    background: rgba(244,7,13,0.08);
-    border-radius: 12px;
-    opacity: 1;
-  }
+.category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  font-size: 4.5rem;
+  color: #2f308d;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 0 #2f308d, 0 16px 30px rgba(0,0,0,0.12);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
 
-  /* On product/category cards — ring expands and pulses */
-  body.cursor-card #tb-cursor-dot  { background: #2f308d; transform: translate(-50%,-50%) scale(0.6); }
-  body.cursor-card #tb-cursor-ring {
-    width: 52px; height: 52px;
-    border-color: #2f308d;
-    background: rgba(47,48,141,0.06);
-    border-radius: 16px;
-    opacity: 1;
-  }
+.category-icon:hover {
+  color: #f4070d;
+  transform: translateY(-6px) scale(1.08);
+  box-shadow: 0 12px 0 #2f308d, 0 22px 40px rgba(0,0,0,0.18);
+}
 
-  /* On text inputs — ring squishes into a thin bar */
-  body.cursor-input #tb-cursor-dot  { width: 2px; height: 20px; border-radius: 1px; background: #2f308d; transform: translate(-50%,-50%); }
-  body.cursor-input #tb-cursor-ring { width: 4px; height: 28px; border-radius: 2px; opacity: 0; }
+.category-icon:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 #2f308d;
+}
 
-  /* On links (nav, footer) — ring is smaller and snappy */
-  body.cursor-link #tb-cursor-dot  { background: #f4070d; transform: translate(-50%,-50%) scale(1.2); }
-  body.cursor-link #tb-cursor-ring {
-    width: 28px; height: 28px;
-    border-color: #f4070d;
-    opacity: 1;
-  }
+/* Dark mode */
+[data-theme="dark"] .categories       { background: #0e0e16; }
+[data-theme="dark"] .category-icon    { background: #1e1e2c; border-color: rgba(255,255,255,0.07); box-shadow: 0 8px 0 #1c1d66, 0 16px 30px rgba(0,0,0,0.5); }
+[data-theme="dark"] .category-icon:hover { box-shadow: 0 12px 0 #1c1d66, 0 22px 40px rgba(0,0,0,0.6); }
 
-  /* Page is loading or cursor leaves window */
-  body.cursor-hidden #tb-cursor-dot,
-  body.cursor-hidden #tb-cursor-ring { opacity: 0; }
+@media (max-width: 600px) {
+  .categories     { gap: 1.2rem; padding: 36px 5% 0; }
+  .category-icon  { width: 100px; height: 100px; font-size: 3rem; border-radius: 16px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTACT EMAIL FORM — added from Trophies-Site contact.html
+   ═══════════════════════════════════════════════════════════ */
+
+.contact-email {
+  padding: 80px 8%;
+  background: #f4f4f6;
+  text-align: center;
+  transition: background 0.3s;
+}
+
+.contact-email-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 48px 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 12px 0 #2f308d, 0 20px 40px rgba(0,0,0,0.12);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.contact-email h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #111;
+}
+
+.contact-email p {
+  margin-bottom: 28px;
+  color: #555;
+  font-size: 15px;
+}
+
+.contact-email-field {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.contact-email input,
+.contact-email textarea {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  background: #f9f9fb;
+  color: #111;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.contact-email input:focus,
+.contact-email textarea:focus {
+  border-color: #2f308d;
+  background: #fff;
+}
+
+.contact-email textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.contact-email button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 14px;
+  background: #2f308d;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 0 #1c1d66, 0 15px 30px rgba(0,0,0,0.2);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.contact-email button:hover {
+  background: #f4070d;
+  box-shadow: 0 8px 0 #a00, 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.contact-email button:active {
+  transform: translateY(5px);
+  box-shadow: 0 4px 0 #1c1d66;
+}
+
+/* Dark mode */
+[data-theme="dark"] .contact-email            { background: #0e0e16; }
+[data-theme="dark"] .contact-email-container  { background: #1e1e2c; border-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .contact-email h2         { color: #f0f0f8; }
+[data-theme="dark"] .contact-email p          { color: #bbbbcc; }
+[data-theme="dark"] .contact-email input,
+[data-theme="dark"] .contact-email textarea   { background: #13131e; border-color: rgba(255,255,255,0.1); color: #f0f0f8; }
+[data-theme="dark"] .contact-email input:focus,
+[data-theme="dark"] .contact-email textarea:focus { border-color: #2f308d; background: #1e1e2c; }
+[data-theme="dark"] .contact-email input::placeholder,
+[data-theme="dark"] .contact-email textarea::placeholder { color: #7777aa; }
+
+@media (max-width: 768px) {
+  .contact-email            { padding: 60px 5%; }
+  .contact-email-container  { padding: 36px 24px; }
 }

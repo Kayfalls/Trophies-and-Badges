@@ -88,6 +88,32 @@
   </div>
 </section>
 
+<!-- SEND US A MESSAGE — from Trophies-Site -->
+<section class="contact-email">
+  <div class="contact-email-container">
+    <h2>Send Us a Message</h2>
+    <p>Have a question or want to place an order? Fill in the form below.</p>
+    <form action="https://formsubmit.co/trophies.badges@gmail.com" method="POST">
+      <!-- Disable formsubmit captcha and redirect back to contact page -->
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="contact.html">
+      <input type="hidden" name="_subject" value="New message from Trophies & Badges website">
+      <div class="contact-email-field">
+        <input type="text" name="name" placeholder="Your Name" required>
+      </div>
+      <div class="contact-email-field">
+        <input type="email" name="email" placeholder="Your Email" required>
+      </div>
+      <div class="contact-email-field">
+        <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+      </div>
+      <button type="submit">
+        <i class="fa-solid fa-paper-plane"></i> Send Message
+      </button>
+    </form>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="footer-grid">
@@ -103,6 +129,5 @@
 
   function toggleMenu() { document.getElementById('mobile-menu').classList.toggle('open'); }
 </script>
-<script src="tb-cursor.js" defer></script>
 </body>
 </html>
