@@ -34,6 +34,8 @@ function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   if (!t) return;
   t.className = `toast show ${type}`;
+  const icon = document.getElementById('toast-icon');
+  if (icon) icon.className = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark';
   const msgEl = document.getElementById('toast-msg');
   if (msgEl) msgEl.textContent = msg;
   setTimeout(() => t.className = 'toast', 3000);
