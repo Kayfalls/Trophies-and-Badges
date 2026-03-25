@@ -153,9 +153,19 @@
 }
 
 /* ─── RESET ───────────────────────────────────────────────── */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+*, *::before, *::after { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+}
 
-body { background: #f4f4f6; color: #111; line-height: 1.6; transition: background 0.3s, color 0.3s; }
+body { 
+  background: #f4f4f6; 
+  color: #111; 
+  line-height: 1.6; 
+  transition: background 0.3s, color 0.3s; 
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
 img  { max-width: 100%; display: block; }
 a    { text-decoration: none; color: inherit; }
 
