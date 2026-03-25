@@ -211,17 +211,27 @@
         if (tokenResult.claims.admin === true) {
           // Already an admin — proceed
           window.location.href = 'dashboard.html';
-        } else {
-          // Not an admin yet — try first-time setup via Cloud Function
-          // This will only succeed if the email matches ADMIN_EMAIL in the server config
-          try {
-            const setAdmin = firebase.functions().httpsCallable('setAdminClaim');
-            await setAdmin({ targetUid: user.uid });
+            // Not an admin yet — try first-time setup via Vercel API
+            try {
+              const idToken = await user.getIdToken();
+              const response = await fetch('/api/set-admin-claim', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ targetUid: user.uid })
+              });
 
-            // Re-fetch token with new claims
-            await user.getIdToken(true);
-            window.location.href = 'dashboard.html';
-          } catch (claimErr) {
+              if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Failed to set admin claim');
+              }
+
+              // Re-fetch token with new claims
+              await user.getIdToken(true);
+              window.location.href = 'dashboard.html';
+            } catch (claimErr) {
             await auth.signOut();
             showError('Access denied. This portal is for authorized admins only.');
           }

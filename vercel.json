@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/admin/(.*)",
+      "destination": "/Trophies-Site/$1"
+    },
+    {
+      "source": "/admin",
+      "destination": "/Trophies-Site/admin.html"
+    },
+    {
+      "source": "/(about|contact|products|product-detail|payment-success|cart)(.*)",
+      "destination": "/Trophies-Badges-Login/$1$2.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/Trophies-Badges-Login/$1"
+    }
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
