@@ -3,19 +3,7 @@
 // =============================================================
 
 
-// ─── TOAST ─────────────────────────────────────────────────
-function showToast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.className = `toast show ${type}`;
-  document.getElementById('toast-msg').textContent = msg;
-  setTimeout(() => t.className = 'toast', 3000);
-}
-
-// ─── MOBILE MENU ───────────────────────────────────────────
-function toggleMenu() {
-  document.getElementById('mobile-menu')?.classList.toggle('open');
-}
+// showToast and toggleMenu are provided by shared.js
 
 // ─── STATE ─────────────────────────────────────────────────
 let allProducts    = [];

@@ -10,7 +10,7 @@ auth.onAuthStateChanged(async user => {
   }
   try {
     const tokenResult = await user.getIdTokenResult();
-    if (tokenResult.claims.admin !== true) {
+    if (tokenResult.claims.admin !== true || !user.emailVerified) {
       auth.signOut().then(() => window.location.href = 'admin.html');
       return;
     }
@@ -25,16 +25,7 @@ auth.onAuthStateChanged(async user => {
   loadOrders();
 });
 
-// ── HTML SANITIZATION ─────────────────────────────────────────
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g,  '&amp;')
-    .replace(/</g,  '&lt;')
-    .replace(/>/g,  '&gt;')
-    .replace(/"/g,  '&quot;')
-    .replace(/'/g,  '&#39;');
-}
+// escapeHtml is provided by shared.js
 
 // ─── NAVIGATION ───────────────────────────────────────────────
 const navLinks   = document.querySelectorAll('.sidebar-nav a');
@@ -70,16 +61,7 @@ document.getElementById('logout-btn').addEventListener('click', () => {
   auth.signOut().then(() => window.location.href = 'admin.html');
 });
 
-// ─── TOAST ─────────────────────────────────────────────────────
-function showToast(msg, type = 'success') {
-  const toast    = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-msg');
-  const icon     = document.getElementById('toast-icon');
-  toast.className = `toast show ${type}`;
-  icon.className  = type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark';
-  toastMsg.textContent = msg;
-  setTimeout(() => toast.className = 'toast', 3500);
-}
+// showToast is provided by shared.js
 
 // ─── DASHBOARD STATS ───────────────────────────────────────────
 async function loadDashboard() {
