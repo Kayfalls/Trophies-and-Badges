@@ -45,6 +45,24 @@ async function loadCategories() {
       activeCategory = chip.dataset.cat;
       renderProducts();
     });
+
+    // Check URL parameters for category filtering
+    const urlParams = new URLSearchParams(window.location.search);
+    const catNameParam = urlParams.get('categoryName');
+    
+    if (catNameParam) {
+      // Find the chip with matching text content
+      const matchingChip = Array.from(scroll.querySelectorAll('.cat-chip')).find(
+        chip => chip.textContent.trim().toLowerCase() === catNameParam.toLowerCase()
+      );
+      
+      if (matchingChip) {
+        document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+        matchingChip.classList.add('active');
+        activeCategory = matchingChip.dataset.cat;
+      }
+    }
+
   } catch (err) {
     console.error('Categories error:', err);
   }

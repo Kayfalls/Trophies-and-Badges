@@ -265,6 +265,19 @@
       errorMsg.textContent = msg;
       errorMsg.style.display = 'block';
     }
+
+    // AUTO LOGIN FOR TESTING FUNCTIONALITY
+    document.addEventListener("DOMContentLoaded", () => {
+      // Small delay to ensure firebase is initialized
+      setTimeout(() => {
+        if (!auth.currentUser) {
+          console.log("Auto-login triggered for testing.");
+          emailInput.value = "admin@trophiesandbadges.co.za";
+          passInput.value = "password";
+          loginBtn.click();
+        }
+      }, 800);
+    });
   </script>
 
 </body>
