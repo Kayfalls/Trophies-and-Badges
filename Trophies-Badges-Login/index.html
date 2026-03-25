@@ -26,13 +26,7 @@
     <a href="products.html">Products</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
-    <a href="cart.html" class="nav-cart">
-      <i class="fa-solid fa-bag-shopping"></i> Cart
-      <span class="nav-cart-count" id="cart-count">0</span>
-    </a>
-    <a href="account.html" style="margin-left:10px;">
-      <i class="fa-solid fa-user"></i>
-    </a>
+
   </div>
   <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
 </nav>
@@ -43,8 +37,7 @@
   <a href="products.html">Products</a>
   <a href="about.html">About</a>
   <a href="contact.html">Contact</a>
-  <a href="cart.html">Cart <span id="mobile-cart-count"></span></a>
-  <a href="account.html">My Account</a>
+
 </div>
 
 <!-- HERO -->
@@ -121,23 +114,14 @@
     </div>
     <div>
       <h4>Quick Links</h4>
-      <p><a href="products.html">Shop</a><br><a href="about.html">About Us</a><br><a href="account.html">My Account</a></p>
+      <p><a href="products.html">Shop</a><br><a href="about.html">About Us</a></p>
     </div>
   </div>
   <p class="copyright">© 2026 Trophies & Badges</p>
 </footer>
 
 <script>
-  // Cart badge
-  function updateCartBadge() {
-    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
-    const el    = document.getElementById('cart-count');
-    const mel   = document.getElementById('mobile-cart-count');
-    if (el)  { el.textContent = count; el.classList.toggle('show', count > 0); }
-    if (mel) mel.textContent = count > 0 ? `(${count})` : '';
-  }
-  updateCartBadge();
+
 
   function toggleMenu() {
     document.getElementById('mobile-menu').classList.toggle('open');

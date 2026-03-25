@@ -18,14 +18,7 @@ const db      = firebase.firestore();
 const auth    = firebase.auth();
 const storage = firebase.storage();
 
-// ── PayFast Configuration ─────────────────────────────────────
-// Fill these in when you receive your PayFast sandbox/live details
-const PAYFAST_CONFIG = {
-  MERCHANT_ID:  'FILL_IN_WHEN_AVAILABLE',
-  MERCHANT_KEY: 'FILL_IN_WHEN_AVAILABLE',
-  PASSPHRASE:   '',
-  SANDBOX:      true
-};
+
 
 // ── EmailJS Configuration ─────────────────────────────────────
 const EMAILJS_CONFIG = {

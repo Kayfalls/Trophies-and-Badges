@@ -2,13 +2,19 @@
 // ADMIN DASHBOARD LOGIC — Trophies-Site
 // =============================================================
 
-// Auth guard — redirect to login if not admin
-auth.onAuthStateChanged(user => {
+// Auth guard — redirect to login if not admin (via Custom Claims)
+auth.onAuthStateChanged(async user => {
   if (!user) {
     window.location.href = 'admin.html';
     return;
   }
-  if (user.email !== ADMIN_EMAIL) {
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    if (tokenResult.claims.admin !== true) {
+      auth.signOut().then(() => window.location.href = 'admin.html');
+      return;
+    }
+  } catch (err) {
     auth.signOut().then(() => window.location.href = 'admin.html');
     return;
   }
@@ -18,6 +24,17 @@ auth.onAuthStateChanged(user => {
   loadCategories();
   loadOrders();
 });
+
+// ── HTML SANITIZATION ─────────────────────────────────────────
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
+}
 
 // ─── NAVIGATION ───────────────────────────────────────────────
 const navLinks   = document.querySelectorAll('.sidebar-nav a');
@@ -67,38 +84,14 @@ function showToast(msg, type = 'success') {
 // ─── DASHBOARD STATS ───────────────────────────────────────────
 async function loadDashboard() {
   try {
-    const [products, categories, orders, reviews] = await Promise.all([
+    const [products, categories, reviews] = await Promise.all([
       db.collection('products').get(),
       db.collection('categories').get(),
-      db.collection('orders').get(),
       db.collection('reviews').get()
     ]);
     document.getElementById('stat-products').textContent   = products.size;
     document.getElementById('stat-categories').textContent = categories.size;
-    document.getElementById('stat-orders').textContent     = orders.size;
     document.getElementById('stat-reviews').textContent    = reviews.size;
-
-    // Recent orders
-    const tbody = document.getElementById('recent-orders-body');
-    const recent = orders.docs
-      .sort((a, b) => b.data().createdAt?.toMillis() - a.data().createdAt?.toMillis())
-      .slice(0, 5);
-
-    if (recent.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:30px;">No orders yet</td></tr>';
-      return;
-    }
-    tbody.innerHTML = recent.map(doc => {
-      const o = doc.data();
-      const date = o.createdAt ? new Date(o.createdAt.toMillis()).toLocaleDateString('en-ZA') : '—';
-      return `<tr>
-        <td><code style="font-size:12px;">${doc.id.slice(0,8)}...</code></td>
-        <td>${o.userName || o.userEmail || '—'}</td>
-        <td>R${(o.total||0).toFixed(2)}</td>
-        <td><span class="order-status ${o.status||'pending'}">${o.status||'pending'}</span></td>
-        <td>${date}</td>
-      </tr>`;
-    }).join('');
   } catch (err) {
     console.error('Dashboard load error:', err);
   }
@@ -126,7 +119,7 @@ function renderCategories() {
   }
   list.innerHTML = categoriesCache.map(c => `
     <div class="cat-chip">
-      <span>${c.name}</span>
+      <span>${escapeHtml(c.name)}</span>
       <button onclick="deleteCategory('${c.id}')" title="Delete">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -136,11 +129,23 @@ function renderCategories() {
 
 function populateCategoryDropdown(selected = '') {
   const select = document.getElementById('p-category');
-  select.innerHTML = '<option value="">Select a category...</option>' +
-    categoriesCache.map(c =>
-      `<option value="${c.id}" ${c.id === selected ? 'selected' : ''}>${c.name}</option>`
-    ).join('') +
-    '<option value="__new__">+ Create new category</option>';
+  const catOptions = categoriesCache.map(c =>
+    `<option value="${c.id}" ${c.id === selected ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+  ).join('');
+
+  if (select) {
+    select.innerHTML = '<option value="">Select a category...</option>' +
+      catOptions + '<option value="__new__">+ Create new category</option>';
+  }
+
+  const filterSelect = document.getElementById('pm-filter-cat');
+  if (filterSelect) {
+    const currentFilter = filterSelect.value;
+    filterSelect.innerHTML = '<option value="">All Categories</option>' + catOptions;
+    if (categoriesCache.some(c => c.id === currentFilter)) {
+      filterSelect.value = currentFilter;
+    }
+  }
 }
 
 document.getElementById('add-cat-btn').addEventListener('click', async () => {
@@ -185,6 +190,18 @@ document.getElementById('p-category').addEventListener('change', async function(
 
 // ─── PRODUCTS ─────────────────────────────────────────────────
 let productsCache = [];
+let currentProductSearch = '';
+let currentProductCatFilter = '';
+
+// Product Search & Filter Listeners
+document.getElementById('pm-search')?.addEventListener('input', e => {
+  currentProductSearch = e.target.value.trim().toLowerCase();
+  renderProducts();
+});
+document.getElementById('pm-filter-cat')?.addEventListener('change', e => {
+  currentProductCatFilter = e.target.value;
+  renderProducts();
+});
 
 async function loadProducts() {
   try {
@@ -198,18 +215,27 @@ async function loadProducts() {
 
 function renderProducts() {
   const tbody = document.getElementById('products-body');
-  if (productsCache.length === 0) {
+  
+  let filtered = productsCache;
+  if (currentProductSearch) {
+    filtered = filtered.filter(p => p.name?.toLowerCase().includes(currentProductSearch) || p.description?.toLowerCase().includes(currentProductSearch));
+  }
+  if (currentProductCatFilter) {
+    filtered = filtered.filter(p => p.categoryId === currentProductCatFilter);
+  }
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr><td colspan="6">
         <div class="empty-state">
           <i class="fa-solid fa-box-open"></i>
-          <p>No products yet. Click "Add Product" to get started.</p>
+          <p>No products found.</p>
         </div>
       </td></tr>`;
     return;
   }
 
-  tbody.innerHTML = productsCache.map(p => {
+  tbody.innerHTML = filtered.map(p => {
     const thumb = p.images && p.images[0]
       ? `<img src="${p.images[0]}" class="product-img-thumb" alt="${p.name}">`
       : `<div style="width:48px;height:48px;background:#eef0fa;border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-image" style="color:#aaa;"></i></div>`;
@@ -222,8 +248,8 @@ function renderProducts() {
 
     return `<tr>
       <td>${thumb}</td>
-      <td class="product-name-cell">${p.name}</td>
-      <td><span class="category-tag">${catName}</span></td>
+      <td class="product-name-cell">${escapeHtml(p.name)}</td>
+      <td><span class="category-tag">${escapeHtml(catName)}</span></td>
       <td><strong>R${Number(p.price).toFixed(2)}</strong></td>
       <td><span class="stock-badge ${stockClass}">${stockLabel}</span></td>
       <td>
@@ -532,62 +558,3 @@ async function deleteProduct(id, name) {
   }
 }
 
-// ─── ORDERS ───────────────────────────────────────────────────
-async function loadOrders() {
-  try {
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').get();
-    const tbody = document.getElementById('orders-body');
-
-    if (snap.empty) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px;">No orders yet</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = snap.docs.map(doc => {
-      const o    = doc.data();
-      const date = o.createdAt ? new Date(o.createdAt.toMillis()).toLocaleDateString('en-ZA') : '—';
-      const itemCount = (o.items || []).length;
-      return `<tr>
-        <td><code style="font-size:12px;">${doc.id.slice(0,8)}...</code></td>
-        <td>${o.userName || '—'}<br><small style="color:#999;">${o.userEmail || ''}</small></td>
-        <td>${itemCount} item${itemCount !== 1 ? 's' : ''}</td>
-        <td><strong>R${(o.total||0).toFixed(2)}</strong></td>
-        <td>
-          <select onchange="updateOrderStatus('${doc.id}', this.value)" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:13px;">
-            ${['pending','paid','shipped','delivered','cancelled'].map(s =>
-              `<option value="${s}" ${s === (o.status||'pending') ? 'selected' : ''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
-            ).join('')}
-          </select>
-        </td>
-        <td>${date}</td>
-        <td>
-          <button class="btn btn-edit btn-sm" onclick="viewOrderDetails('${doc.id}')">
-            <i class="fa-solid fa-eye"></i> View
-          </button>
-        </td>
-      </tr>`;
-    }).join('');
-
-  } catch (err) {
-    console.error('Orders load error:', err);
-  }
-}
-
-async function updateOrderStatus(orderId, status) {
-  try {
-    await db.collection('orders').doc(orderId).update({ status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    showToast(`Order status updated to "${status}"`);
-  } catch (err) {
-    showToast('Error updating status', 'error');
-  }
-}
-
-function viewOrderDetails(orderId) {
-  // Navigate to orders section with order details highlighted
-  const order = db.collection('orders').doc(orderId).get().then(doc => {
-    if (!doc.exists) return;
-    const o = doc.data();
-    const items = (o.items || []).map(i => `${i.name} × ${i.quantity} — R${(i.price * i.quantity).toFixed(2)}`).join('\n');
-    alert(`Order: ${orderId}\nCustomer: ${o.userName} (${o.userEmail})\nItems:\n${items}\nTotal: R${(o.total||0).toFixed(2)}\nStatus: ${o.status}\nAddress: ${JSON.stringify(o.shippingAddress || {})}`);
-  });
-}

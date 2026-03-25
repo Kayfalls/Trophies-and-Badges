@@ -26,11 +26,7 @@
     <a href="products.html" class="active">Products</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
-    <a href="cart.html" class="nav-cart">
-      <i class="fa-solid fa-bag-shopping"></i> Cart
-      <span class="nav-cart-count" id="cart-count">0</span>
-    </a>
-    <a href="account.html" style="margin-left:10px;"><i class="fa-solid fa-user"></i></a>
+
   </div>
   <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
 </nav>
@@ -41,8 +37,7 @@
   <a href="products.html" class="active">Products</a>
   <a href="about.html">About</a>
   <a href="contact.html">Contact</a>
-  <a href="cart.html">Cart <span class="mobile-cart-count" id="mobile-cart-count"></span></a>
-  <a href="account.html">My Account</a>
+
 </div>
 
 <!-- PAGE HERO -->
@@ -81,7 +76,7 @@
     <div><h4>Address</h4><p>Trade Route Mall<br>Cnr Nirvana Rd & K43<br>Lenasia Ext. 9</p></div>
     <div><h4>Phone</h4><p><a href="tel:+27837676746">+27 83 767 6746</a><br><a href="tel:+27817524685">+27 81 752 4685</a></p></div>
     <div><h4>Email</h4><p><a href="mailto:trophies.badges@gmail.com">trophies.badges@gmail.com</a></p></div>
-    <div><h4>Quick Links</h4><p><a href="index.html">Home</a><br><a href="about.html">About Us</a><br><a href="account.html">My Account</a></p></div>
+    <div><h4>Quick Links</h4><p><a href="index.html">Home</a><br><a href="about.html">About Us</a></p></div>
   </div>
   <p class="copyright">© 2026 Trophies & Badges</p>
 </footer>
@@ -95,19 +90,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="sanitize.js"></script>
 <script src="app.js"></script>
-<script>
-  // Cart badge update
-  (function updateBadges(){
-    var cart = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-    var count = (cart.items||[]).reduce(function(s,i){return s+i.quantity;},0);
-    var el  = document.getElementById('cart-count');
-    var mel = document.getElementById('mobile-cart-count');
-    if(el){ el.textContent=count; el.classList.toggle('show',count>0); }
-    if(mel){ mel.textContent=count>0?count:''; mel.classList.toggle('show',count>0); }
-  })();
-  function toggleMenu(){ document.getElementById('mobile-menu')?.classList.toggle('open'); }
-</script>
+
 <script src="tb-cursor.js" defer></script>
 </body>
 </html>

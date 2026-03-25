@@ -2,14 +2,6 @@
 // APP.JS — Trophies-Badges Customer App (products.html)
 // =============================================================
 
-// ─── CART BADGE ────────────────────────────────────────────
-function updateCartBadge() {
-  const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-  const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
-  const el    = document.getElementById('cart-count');
-  if (el) { el.textContent = count; el.classList.toggle('show', count > 0); }
-}
-updateCartBadge();
 
 // ─── TOAST ─────────────────────────────────────────────────
 function showToast(msg, type = 'success') {
@@ -102,14 +94,14 @@ function renderProducts() {
       <div class="empty-state">
         <i class="fa-solid fa-box-open"></i>
         <h3>${searchQuery ? 'No results found' : 'No products yet'}</h3>
-        <p>${searchQuery ? `No products match "${searchQuery}"` : 'Check back soon — products are being added!'}</p>
+        <p>${searchQuery ? `No products match "${escapeHtml(searchQuery)}"` : 'Check back soon — products are being added!'}</p>
       </div>`;
     return;
   }
 
   grid.innerHTML = filtered.map(p => {
     const imgHtml = p.images && p.images[0]
-      ? `<img class="card-img" src="${p.images[0]}" alt="${p.name}" loading="lazy">`
+      ? `<img class="card-img" src="${escapeHtml(p.images[0])}" alt="${escapeHtml(p.name)}" loading="lazy">`
       : `<div class="card-img-placeholder"><i class="fa-solid fa-trophy"></i></div>`;
 
     const stockClass = p.stock === 0 ? 'out' : '';
@@ -121,8 +113,8 @@ function renderProducts() {
       <div class="product-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
         ${imgHtml}
         <div class="card-body">
-          ${p.categoryName ? `<div class="card-cat">${p.categoryName}</div>` : ''}
-          <div class="card-title">${p.name}</div>
+          ${p.categoryName ? `<div class="card-cat">${escapeHtml(p.categoryName)}</div>` : ''}
+          <div class="card-title">${escapeHtml(p.name)}</div>
           <div class="card-price">R${Number(p.price).toFixed(2)}</div>
           <div class="card-stock ${stockClass}">${stockText}</div>
         </div>

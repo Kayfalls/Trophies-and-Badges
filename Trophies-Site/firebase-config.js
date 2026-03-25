@@ -18,5 +18,3 @@ firebase.initializeApp(firebaseConfig);
 const db      = firebase.firestore();
 const auth    = firebase.auth();
 const storage = firebase.storage();
-
-const ADMIN_EMAIL = "trophies.badges@gmail.com";

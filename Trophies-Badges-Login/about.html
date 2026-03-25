@@ -26,24 +26,11 @@
     <a href="products.html">Products</a>
     <a href="about.html" class="active">About</a>
     <a href="contact.html">Contact</a>
-    <a href="cart.html" class="nav-cart">
-      <i class="fa-solid fa-bag-shopping"></i> Cart
-      <span class="nav-cart-count" id="cart-count">0</span>
-    </a>
-    <a href="account.html" style="margin-left:10px;"><i class="fa-solid fa-user"></i></a>
+
   </div>
   <button class="hamburger" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
 </nav>
 
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobile-menu">
-  <a href="index.html">Home</a>
-  <a href="products.html">Products</a>
-  <a href="about.html" class="active">About</a>
-  <a href="contact.html">Contact</a>
-  <a href="cart.html">Cart <span class="mobile-cart-count" id="mobile-cart-count"></span></a>
-  <a href="account.html">My Account</a>
-</div>
 
 <!-- PAGE HERO -->
 <section class="page-hero">
@@ -86,19 +73,12 @@
     <div><h4>Address</h4><p>Trade Route Mall<br>Cnr Nirvana Rd & K43<br>Lenasia Ext. 9</p></div>
     <div><h4>Phone</h4><p><a href="tel:+27837676746">+27 83 767 6746</a><br><a href="tel:+27817524685">+27 81 752 4685</a></p></div>
     <div><h4>Email</h4><p><a href="mailto:trophies.badges@gmail.com">trophies.badges@gmail.com</a></p></div>
-    <div><h4>Quick Links</h4><p><a href="products.html">Shop</a><br><a href="contact.html">Contact</a><br><a href="account.html">My Account</a></p></div>
+    <div><h4>Quick Links</h4>      <p><a href="products.html">Shop</a><br><a href="about.html">About Us</a></p></div>
   </div>
   <p class="copyright">© 2026 Trophies & Badges</p>
 </footer>
 
 <script>
-  function updateCartBadge() {
-    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
-    const el    = document.getElementById('cart-count');
-    if (el) { el.textContent = count; el.classList.toggle('show', count > 0); }
-  }
-  updateCartBadge();
   function toggleMenu() { document.getElementById('mobile-menu').classList.toggle('open'); }
 </script>
 <script src="tb-cursor.js" defer></script>

@@ -22,10 +22,7 @@
 <nav class="topnav">
   <a href="index.html" class="icon-btn"><i class="fa-solid fa-arrow-left"></i></a>
   <div class="topnav-logo" style="flex:1;text-align:center;">Product Detail</div>
-  <a href="cart.html" class="icon-btn" aria-label="Cart">
-    <i class="fa-solid fa-bag-shopping"></i>
-    <span class="cart-badge" id="cart-badge">0</span>
-  </a>
+
 </nav>
 
 <!-- DETAIL PAGE -->
@@ -37,24 +34,13 @@
   </div>
 </div>
 
-<!-- STICKY BUY BAR (injected after load) -->
-<div class="buy-bar" id="buy-bar" style="display:none;">
-  <div class="qty-control">
-    <button id="qty-minus"><i class="fa-solid fa-minus"></i></button>
-    <span id="qty-display">1</span>
-    <button id="qty-plus"><i class="fa-solid fa-plus"></i></button>
-  </div>
-  <button class="btn btn-primary" style="flex:1;" id="add-to-cart-btn">
-    <i class="fa-solid fa-bag-shopping"></i> Add to Cart
-  </button>
-</div>
+
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
   <a href="index.html"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
-  <a href="cart.html"><i class="fa-solid fa-bag-shopping"></i><span>Cart</span><span class="cart-dot" id="cart-dot"></span></a>
-  <a href="account.html"><i class="fa-solid fa-user"></i><span>Account</span></a>
+
 </nav>
 
 <!-- TOAST -->
@@ -69,22 +55,14 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="sanitize.js"></script>
 <script>
   // Theme
   const themeVal = localStorage.getItem('theme') || 'system';
   if (themeVal === 'dark') document.documentElement.dataset.theme = 'dark';
   else if (themeVal === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark';
 
-  // Cart badge
-  function updateCartBadge() {
-    const cart  = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-    const count = (cart.items || []).reduce((s, i) => s + i.quantity, 0);
-    const badge = document.getElementById('cart-badge');
-    const dot   = document.getElementById('cart-dot');
-    if (badge) { badge.textContent = count; badge.classList.toggle('show', count > 0); }
-    if (dot)   dot.classList.toggle('show', count > 0);
-  }
-  updateCartBadge();
+
 
   function showToast(msg, type = 'success') {
     const t = document.getElementById('toast');
@@ -97,7 +75,6 @@
   if (!productId) window.location.href = 'index.html';
 
   let product = null;
-  let qty     = 1;
   let currentUser = null;
 
   auth.onAuthStateChanged(u => { currentUser = u; });
@@ -130,7 +107,7 @@
 
     const mainImgSrc = images[0] || '';
     const mainMedia  = mainImgSrc
-      ? `<img class="main-image" id="main-img" src="${mainImgSrc}" alt="${product.name}">`
+      ? `<img class="main-image" id="main-img" src="${escapeHtml(mainImgSrc)}" alt="${escapeHtml(product.name)}">`
       : `<div class="main-image" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:60px;color:var(--primary);"><i class="fa-solid fa-trophy"></i></div>`;
 
     const thumbs = images.map((url, i) =>
@@ -148,11 +125,11 @@
 
       <!-- Info -->
       <div class="detail-info">
-        ${product.categoryName ? `<div class="detail-cat">${product.categoryName}</div>` : ''}
-        <h1 class="detail-title">${product.name}</h1>
+        ${product.categoryName ? `<div class="detail-cat">${escapeHtml(product.categoryName)}</div>` : ''}
+        <h1 class="detail-title">${escapeHtml(product.name)}</h1>
         <div class="detail-price">R${Number(product.price).toFixed(2)}</div>
         <span class="detail-stock ${stockClass}">${stockText}</span>
-        <p class="detail-desc">${product.description || ''}</p>
+        <p class="detail-desc">${escapeHtml(product.description || '')}</p>
 
         <!-- Shipping Info -->
         <div class="info-section">
@@ -199,11 +176,6 @@
         <div class="write-review" id="write-review-section"></div>
       </div>
     `;
-
-    // Buy bar
-    if (product.stock > 0) {
-      document.getElementById('buy-bar').style.display = 'flex';
-    }
   }
 
   function switchMedia(type, src, thumbEl) {
@@ -224,35 +196,6 @@
     icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
   }
 
-  // ─── QTY CONTROL ───────────────────────────────────────────
-  document.getElementById('qty-minus').addEventListener('click', () => {
-    if (qty > 1) { qty--; document.getElementById('qty-display').textContent = qty; }
-  });
-  document.getElementById('qty-plus').addEventListener('click', () => {
-    if (qty < (product?.stock || 1)) { qty++; document.getElementById('qty-display').textContent = qty; }
-  });
-
-  // ─── ADD TO CART ───────────────────────────────────────────
-  document.getElementById('add-to-cart-btn').addEventListener('click', () => {
-    if (!product || product.stock === 0) return;
-    const cart = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-    const existing = cart.items.find(i => i.productId === product.id);
-    if (existing) {
-      existing.quantity = Math.min(existing.quantity + qty, product.stock);
-    } else {
-      cart.items.push({
-        productId: product.id,
-        name:      product.name,
-        price:     product.price,
-        image:     product.images?.[0] || '',
-        quantity:  qty,
-        stock:     product.stock
-      });
-    }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartBadge();
-    showToast(`${qty} × ${product.name} added to cart`);
-  });
 
   // ─── REVIEWS ───────────────────────────────────────────────
   async function loadReviews() {
@@ -292,11 +235,11 @@
               return `
                 <div class="review-card">
                   <div class="review-header">
-                    <span class="reviewer-name">${r.userName || 'Anonymous'}</span>
+                    <span class="reviewer-name">${escapeHtml(r.userName || 'Anonymous')}</span>
                     <span class="review-date">${date}</span>
                   </div>
                   <div class="stars">${renderStars(r.stars)}</div>
-                  <p class="review-text" style="margin-top:6px;">${r.comment || ''}</p>
+                  <p class="review-text" style="margin-top:6px;">${escapeHtml(r.comment || '')}</p>
                 </div>`;
             }).join('');
         }
