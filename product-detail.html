@@ -39,7 +39,7 @@
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
-  <a href="index.html"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
+  <a href="products.html"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></a>
 
 </nav>
 
@@ -180,8 +180,8 @@
   function toggleInfo(header) {
     const body = header.nextElementSibling;
     const icon = header.querySelector('i.fa-chevron-down');
-    body.classList.toggle('open');
-    icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+    const isOpen = body.classList.toggle('open');
+    icon.style.transform = isOpen ? 'rotate(180deg)' : '';
   }
 
 
@@ -254,7 +254,7 @@
       el.innerHTML = `
         <div style="background:var(--surface-2);border-radius:12px;padding:16px;text-align:center;margin-top:8px;">
           <p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Sign in to leave a review</p>
-          <a href="admin.html" class="btn btn-primary btn-sm">Sign In</a>
+          <a href="login.html?return=${encodeURIComponent('product-detail.html?id=' + productId)}" class="btn btn-primary btn-sm">Sign In / Register</a>
         </div>`;
       return;
     }
