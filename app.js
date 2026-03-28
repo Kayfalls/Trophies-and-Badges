@@ -185,5 +185,6 @@ if (searchInput) {
 }
 
 // ─── INIT ──────────────────────────────────────────────────
-loadCategories();
-loadProducts();
+// Load categories first so allSubcategories is populated before
+// the products onSnapshot fires and renderProducts() runs.
+loadCategories().then(() => loadProducts());

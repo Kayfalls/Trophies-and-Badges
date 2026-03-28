@@ -334,12 +334,14 @@ function renderProducts() {
     const stockClass = stockNum === 0 ? 'out-of-stock' : stockNum <= 5 ? 'low-stock' : 'in-stock';
     const stockLabel = stockNum === 0 ? 'Out of stock' : stockNum <= 5 ? `Low (${stockNum})` : stockNum;
 
-    const catName = categoriesCache.find(c => c.id === p.categoryId)?.name || '—';
+    const catName    = categoriesCache.find(c => c.id === p.categoryId)?.name || '—';
+    const subcatName = subcategoriesCache.find(s => s.id === p.subcategoryId)?.name || '';
+    const catDisplay = subcatName ? `${catName} › ${subcatName}` : catName;
 
     return `<tr>
       <td>${thumb}</td>
       <td class="product-name-cell">${escapeHtml(p.name)}</td>
-      <td><span class="category-tag">${escapeHtml(catName)}</span></td>
+      <td><span class="category-tag">${escapeHtml(catDisplay)}</span></td>
       <td><strong>R${Number(p.price).toFixed(2)}</strong></td>
       <td><span class="stock-badge ${stockClass}">${stockLabel}</span></td>
       <td>
@@ -439,7 +441,9 @@ function clearModal() {
   document.getElementById('p-price').value   = '';
   document.getElementById('p-stock').value   = '';
   document.getElementById('p-category').value = '';
-  document.getElementById('p-subcategory').value = '';
+  // Reset subcategory dropdown to empty
+  const subcatSel = document.getElementById('p-subcategory');
+  if (subcatSel) { subcatSel.innerHTML = '<option value="">None</option>'; }
   document.getElementById('p-images').value  = '';
   document.getElementById('p-video').value   = '';
   imgPreview.innerHTML = '';
