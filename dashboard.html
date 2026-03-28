@@ -332,14 +332,31 @@
 
     <!-- CATEGORIES SECTION -->
     <section class="section" id="section-categories">
-      <div class="card">
-        <div class="card-header"><h2>Product Categories</h2></div>
+
+      <!-- MAIN CATEGORIES -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h2>Main Categories</h2></div>
         <div class="cat-list" id="cat-list"></div>
         <div class="add-cat-row">
           <input type="text" id="new-cat-input" placeholder="New category name...">
-          <button class="btn btn-primary" id="add-cat-btn"><i class="fa-solid fa-plus"></i> Add</button>
+          <button class="btn btn-primary" id="add-cat-btn"><i class="fa-solid fa-plus"></i> Add Category</button>
         </div>
       </div>
+
+      <!-- SUBCATEGORIES -->
+      <div class="card">
+        <div class="card-header"><h2>Subcategories</h2></div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Add subcategories under a main category. They appear as filter chips inside the shop.</p>
+        <div id="subcat-list"></div>
+        <div class="add-cat-row" style="flex-wrap:wrap;gap:10px;margin-top:16px;">
+          <select id="subcat-parent" style="padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:13px;outline:none;flex:1;min-width:160px;box-sizing:border-box;">
+            <option value="">Select parent category...</option>
+          </select>
+          <input type="text" id="new-subcat-input" placeholder="Subcategory name..." style="flex:2;min-width:160px;">
+          <button class="btn btn-primary" id="add-subcat-btn"><i class="fa-solid fa-plus"></i> Add Subcategory</button>
+        </div>
+      </div>
+
     </section>
 
 
@@ -374,10 +391,16 @@
         <label>Stock Quantity *</label>
         <input type="number" id="p-stock" placeholder="0" min="0">
       </div>
-      <div class="field form-full">
+      <div class="field">
         <label>Category *</label>
         <select id="p-category">
           <option value="">Select a category...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Subcategory <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+        <select id="p-subcategory">
+          <option value="">None</option>
         </select>
       </div>
 

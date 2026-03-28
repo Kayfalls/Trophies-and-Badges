@@ -81,18 +81,27 @@ async function loadDashboard() {
 
 // ─── CATEGORIES ───────────────────────────────────────────────
 let categoriesCache = [];
+let subcategoriesCache = [];
 
+// ─── LOAD CATEGORIES + SUBCATEGORIES ──────────────────────────
 async function loadCategories() {
   try {
-    const snap = await db.collection('categories').orderBy('name').get();
-    categoriesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const [catSnap, subcatSnap] = await Promise.all([
+      db.collection('categories').orderBy('name').get(),
+      db.collection('subcategories').orderBy('name').get()
+    ]);
+    categoriesCache    = catSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    subcategoriesCache = subcatSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderCategories();
+    renderSubcategories();
     populateCategoryDropdown();
+    populateSubcatParentDropdown();
   } catch (err) {
     console.error('Categories load error:', err);
   }
 }
 
+// ─── RENDER MAIN CATEGORIES ───────────────────────────────────
 function renderCategories() {
   const list = document.getElementById('cat-list');
   if (categoriesCache.length === 0) {
@@ -109,6 +118,116 @@ function renderCategories() {
   `).join('');
 }
 
+// ─── RENDER SUBCATEGORIES (grouped by parent) ─────────────────
+function renderSubcategories() {
+  const container = document.getElementById('subcat-list');
+  if (!container) return;
+
+  if (subcategoriesCache.length === 0) {
+    container.innerHTML = '<p style="color:#999;font-size:14px;margin-bottom:12px;">No subcategories yet.</p>';
+    return;
+  }
+
+  // Group by parentId
+  const grouped = {};
+  subcategoriesCache.forEach(s => {
+    if (!grouped[s.parentId]) grouped[s.parentId] = [];
+    grouped[s.parentId].push(s);
+  });
+
+  container.innerHTML = Object.entries(grouped).map(([parentId, subs]) => {
+    const parentName = categoriesCache.find(c => c.id === parentId)?.name || 'Unknown';
+    const chips = subs.map(s => `
+      <div class="cat-chip" style="background:#eef0fa;">
+        <span>${escapeHtml(s.name)}</span>
+        <button onclick="deleteSubcategory('${s.id}')" title="Delete">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>`).join('');
+    return `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">
+          <i class="fa-solid fa-folder-open" style="margin-right:6px;"></i>${escapeHtml(parentName)}
+        </div>
+        <div class="cat-list">${chips}</div>
+      </div>`;
+  }).join('');
+}
+
+// ─── POPULATE PARENT DROPDOWN IN SUBCAT FORM ─────────────────
+function populateSubcatParentDropdown() {
+  const sel = document.getElementById('subcat-parent');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select parent category...</option>' +
+    categoriesCache.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+// ─── ADD MAIN CATEGORY ────────────────────────────────────────
+document.getElementById('add-cat-btn').addEventListener('click', async () => {
+  const input = document.getElementById('new-cat-input');
+  const name  = input.value.trim();
+  if (!name) return;
+  try {
+    await db.collection('categories').add({ name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    input.value = '';
+    await loadCategories();
+    showToast(`Category "${name}" added`);
+  } catch (err) {
+    showToast('Error adding category', 'error');
+  }
+});
+
+// ─── ADD SUBCATEGORY ──────────────────────────────────────────
+document.getElementById('add-subcat-btn').addEventListener('click', async () => {
+  const parentId = document.getElementById('subcat-parent').value;
+  const input    = document.getElementById('new-subcat-input');
+  const name     = input.value.trim();
+  if (!parentId) { showToast('Select a parent category first', 'error'); return; }
+  if (!name)     { showToast('Enter a subcategory name', 'error'); return; }
+  const parentName = categoriesCache.find(c => c.id === parentId)?.name || '';
+  try {
+    await db.collection('subcategories').add({
+      name, parentId, parentName,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = '';
+    await loadCategories();
+    showToast(`Subcategory "${name}" added under "${parentName}"`);
+  } catch (err) {
+    showToast('Error adding subcategory', 'error');
+  }
+});
+
+// ─── DELETE MAIN CATEGORY ─────────────────────────────────────
+async function deleteCategory(id) {
+  const hasChildren = subcategoriesCache.some(s => s.parentId === id);
+  if (hasChildren) {
+    showToast('Delete subcategories under this category first', 'error');
+    return;
+  }
+  if (!confirm('Delete this category?')) return;
+  try {
+    await db.collection('categories').doc(id).delete();
+    await loadCategories();
+    showToast('Category deleted');
+  } catch (err) {
+    showToast('Error deleting category', 'error');
+  }
+}
+
+// ─── DELETE SUBCATEGORY ───────────────────────────────────────
+async function deleteSubcategory(id) {
+  if (!confirm('Delete this subcategory?')) return;
+  try {
+    await db.collection('subcategories').doc(id).delete();
+    await loadCategories();
+    showToast('Subcategory deleted');
+  } catch (err) {
+    showToast('Error deleting subcategory', 'error');
+  }
+}
+
+// ─── CATEGORY DROPDOWN (product modal) ───────────────────────
 function populateCategoryDropdown(selected = '') {
   const select = document.getElementById('p-category');
   const catOptions = categoriesCache.map(c =>
@@ -128,31 +247,18 @@ function populateCategoryDropdown(selected = '') {
       filterSelect.value = currentFilter;
     }
   }
+
+  // Reset subcategory dropdown when category changes
+  populateSubcategoryModalDropdown(selected, '');
 }
 
-document.getElementById('add-cat-btn').addEventListener('click', async () => {
-  const input = document.getElementById('new-cat-input');
-  const name  = input.value.trim();
-  if (!name) return;
-  try {
-    await db.collection('categories').add({ name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    input.value = '';
-    await loadCategories();
-    showToast(`Category "${name}" added`);
-  } catch (err) {
-    showToast('Error adding category', 'error');
-  }
-});
-
-async function deleteCategory(id) {
-  if (!confirm('Delete this category?')) return;
-  try {
-    await db.collection('categories').doc(id).delete();
-    await loadCategories();
-    showToast('Category deleted');
-  } catch (err) {
-    showToast('Error deleting category', 'error');
-  }
+// ─── SUBCATEGORY DROPDOWN (product modal) ────────────────────
+function populateSubcategoryModalDropdown(categoryId, selectedSubId = '') {
+  const sel = document.getElementById('p-subcategory');
+  if (!sel) return;
+  const subs = subcategoriesCache.filter(s => s.parentId === categoryId);
+  sel.innerHTML = '<option value="">None</option>' +
+    subs.map(s => `<option value="${s.id}" ${s.id === selectedSubId ? 'selected' : ''}>${escapeHtml(s.name)}</option>`).join('');
 }
 
 // Handle "create new category" option in dropdown
@@ -167,6 +273,8 @@ document.getElementById('p-category').addEventListener('change', async function(
     } else {
       this.value = '';
     }
+  } else {
+    populateSubcategoryModalDropdown(this.value);
   }
 });
 
@@ -283,6 +391,7 @@ function openEditModal(id) {
   document.getElementById('p-price').value = p.price || '';
   document.getElementById('p-stock').value = p.stock || '';
   populateCategoryDropdown(p.categoryId || '');
+  populateSubcategoryModalDropdown(p.categoryId || '', p.subcategoryId || '');
 
   // Show existing images
   if (p.images && p.images.length > 0) {
@@ -330,6 +439,7 @@ function clearModal() {
   document.getElementById('p-price').value   = '';
   document.getElementById('p-stock').value   = '';
   document.getElementById('p-category').value = '';
+  document.getElementById('p-subcategory').value = '';
   document.getElementById('p-images').value  = '';
   document.getElementById('p-video').value   = '';
   imgPreview.innerHTML = '';
@@ -412,6 +522,7 @@ async function saveProduct() {
   const price     = parseFloat(document.getElementById('p-price').value);
   const stock     = parseInt(document.getElementById('p-stock').value, 10);
   const catId     = document.getElementById('p-category').value;
+  const subcatId  = document.getElementById('p-subcategory').value;
   const editId    = document.getElementById('edit-product-id').value;
 
   if (!name || !desc || isNaN(price) || isNaN(stock) || !catId) {
@@ -478,7 +589,8 @@ async function saveProduct() {
     }
 
     const allImages = [...existingImages, ...uploadedImageURLs];
-    const catName   = categoriesCache.find(c => c.id === catId)?.name || '';
+    const catName    = categoriesCache.find(c => c.id === catId)?.name || '';
+    const subcatName  = subcategoriesCache.find(s => s.id === subcatId)?.name || '';
 
     const productData = {
       name,
@@ -487,6 +599,8 @@ async function saveProduct() {
       stock,
       categoryId: catId,
       categoryName: catName,
+      subcategoryId: subcatId || null,
+      subcategoryName: subcatName || null,
       images: allImages,
       videoUrl: videoURL || null,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()

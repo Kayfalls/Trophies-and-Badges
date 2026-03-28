@@ -909,3 +909,107 @@ a    { text-decoration: none; color: inherit; }
   .image-gallery { position: static; }
   .detail-info   { padding-bottom: 20px; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH-AWARE NAVBAR — user avatar + dropdown
+   ═══════════════════════════════════════════════════════════ */
+
+.nav-user-wrap {
+  position: relative;
+  display: inline-flex;
+  margin-left: 20px;
+}
+
+.nav-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef0fa;
+  border: 1.5px solid rgba(47,48,141,0.15);
+  border-radius: 30px;
+  padding: 6px 14px 6px 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2f308d;
+  transition: background 0.2s, border-color 0.2s;
+}
+.nav-user-btn:hover { background: #dde0f5; border-color: #2f308d; }
+
+.nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #2f308d;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-username { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.nav-chevron { font-size: 11px; transition: transform 0.2s; color: #2f308d; }
+
+/* Dropdown panel */
+.nav-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  box-shadow: 0 8px 0 #2f308d, 0 16px 40px rgba(0,0,0,0.12);
+  min-width: 200px;
+  z-index: 500;
+  overflow: hidden;
+  padding: 8px 0;
+}
+.nav-dropdown.open { display: block; }
+
+.nav-dropdown-email {
+  padding: 10px 16px 8px;
+  font-size: 12px;
+  color: #888;
+  word-break: break-all;
+}
+.nav-dropdown-divider {
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.07);
+  margin: 4px 0;
+}
+.nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c00;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.nav-dropdown-item:hover { background: #fff0f0; }
+.nav-dropdown-item i { width: 16px; text-align: center; }
+
+/* Dark mode */
+[data-theme="dark"] .nav-user-btn      { background: #1e1e2c; border-color: rgba(255,255,255,0.12); color: #8888dd; }
+[data-theme="dark"] .nav-user-btn:hover{ background: #2a2a3e; }
+[data-theme="dark"] .nav-chevron       { color: #8888dd; }
+[data-theme="dark"] .nav-dropdown      { background: #1e1e2c; border-color: rgba(255,255,255,0.08); box-shadow: 0 8px 0 #1c1d66, 0 16px 40px rgba(0,0,0,0.5); }
+[data-theme="dark"] .nav-dropdown-email{ color: #7777aa; }
+[data-theme="dark"] .nav-dropdown-divider { border-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .nav-dropdown-item { color: #ff6666; }
+[data-theme="dark"] .nav-dropdown-item:hover { background: rgba(200,0,0,0.12); }
+
+/* Hide username label on small screens — just show avatar */
+@media (max-width: 1100px) { .nav-username { display: none; } }
