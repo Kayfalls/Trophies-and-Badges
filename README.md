@@ -4,7 +4,7 @@ A client-facing e-commerce web app built for a local awards shop in Johannesburg
 
 ## Live Demo
 
-[View the live site](https://your-vercel-url.vercel.app) <!-- replace with your actual Vercel URL -->
+[View the live site](https://trophiesandbadges.vercel.app/) <!-- replace with your actual Vercel URL -->
 
 ## Features
 
