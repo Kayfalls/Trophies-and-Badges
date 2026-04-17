@@ -318,6 +318,7 @@ a    { text-decoration: none; color: inherit; }
 }
 .cat-chip:hover  { border-color: #2f308d; color: #2f308d; }
 .cat-chip.active { background: #2f308d; border-color: #2f308d; color: #fff; box-shadow: 0 4px 0 #1c1d66; }
+.subcat-label { font-size: 13px; font-weight: 600; color: #555; margin: 12px 0 6px; }
 
 /* ─── PRODUCT GRID ────────────────────────────────────────── */
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px; }

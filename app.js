@@ -22,6 +22,7 @@ async function loadCategories() {
     allSubcategories = subcatSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     const scroll = document.getElementById('cat-scroll');
+    const subcatScroll = document.getElementById('subcat-scroll');
     if (!scroll) return;
 
     // Build main category chips
@@ -35,7 +36,7 @@ async function loadCategories() {
     });
 
     // ── Chip click handler ──────────────────────────────────
-    scroll.addEventListener('click', e => {
+    const handleChipClick = e => {
       const chip = e.target.closest('.cat-chip');
       if (!chip) return;
 
@@ -61,7 +62,10 @@ async function loadCategories() {
       }
 
       renderProducts();
-    });
+    };
+
+    scroll.addEventListener('click', handleChipClick);
+    if (subcatScroll) subcatScroll.addEventListener('click', handleChipClick);
 
     // ── Handle URL param (e.g. from homepage category cards) ─
     const catNameParam = new URLSearchParams(window.location.search).get('categoryName');
@@ -87,13 +91,8 @@ function renderSubcategoryChips(parentId) {
   const subs = allSubcategories.filter(s => s.parentId === parentId);
   if (subs.length === 0) return;
 
-  const scroll = document.getElementById('cat-scroll');
-
-  const divider = document.createElement('span');
-  divider.id = 'subcat-divider';
-  divider.textContent = '›';
-  divider.style.cssText = 'color:#aaa;font-size:18px;align-self:center;flex-shrink:0;padding:0 2px;';
-  scroll.appendChild(divider);
+  const scroll = document.getElementById('subcat-scroll');
+  if (!scroll) return;
 
   subs.forEach(sub => {
     const chip        = document.createElement('div');
@@ -106,7 +105,7 @@ function renderSubcategoryChips(parentId) {
 }
 
 function clearSubcategoryChips() {
-  document.querySelectorAll('.subcat-chip, #subcat-divider').forEach(el => el.remove());
+  document.querySelectorAll('#subcat-scroll .subcat-chip').forEach(el => el.remove());
   activeSubcategory = 'all';
 }
 
