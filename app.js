@@ -146,6 +146,9 @@ function renderProducts() {
     );
   }
 
+  // Sort by price: lowest → highest
+  filtered.sort((a, b) => Number(a.price) - Number(b.price));
+
   if (filtered.length === 0) {
     grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-box-open"></i><h3>${searchQuery ? 'No results found' : 'No products yet'}</h3><p>${searchQuery ? 'No products match "' + escapeHtml(searchQuery) + '"' : 'Check back soon!'}</p></div>`;
     return;
